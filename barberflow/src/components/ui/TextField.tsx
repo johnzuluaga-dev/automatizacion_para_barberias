@@ -1,7 +1,7 @@
 import { useId, type ComponentProps, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-interface TextFieldProps extends Omit<ComponentProps<'input'>, 'id'> {
+interface TextFieldProps extends ComponentProps<'input'> {
   label: string;
   hint?: string;
   error?: string;
@@ -16,8 +16,9 @@ export const inputStyles =
   'hover:border-ink/40 focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 ' +
   'aria-invalid:border-danger aria-invalid:focus:ring-danger/20';
 
-export function TextField({ label, hint, error, icon, trailing, className, required, ...props }: TextFieldProps) {
-  const id = useId();
+export function TextField({ id: idProp, label, hint, error, icon, trailing, className, required, ...props }: TextFieldProps) {
+  const autoId = useId();
+  const id = idProp ?? autoId;
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
   const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(' ') || undefined;

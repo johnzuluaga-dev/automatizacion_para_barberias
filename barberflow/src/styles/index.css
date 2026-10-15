@@ -112,6 +112,25 @@
 
 /* Modal nativo: entrada suave y fondo atenuado. */
 @layer components {
+  /* Franja de poste de barbería: único guiño decorativo de la marca. */
+  .bf-pole {
+    background: repeating-linear-gradient(
+      -55deg,
+      var(--accent) 0 6px,
+      var(--surface) 6px 9px,
+      var(--accent-2) 9px 15px,
+      var(--surface) 15px 18px
+    );
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  /* En móvil la barra de reserva es fija: deja espacio al hacer scroll a un campo. */
+  @media (width < 64rem) {
+    html:has(.bf-mobile-bar) {
+      scroll-padding-bottom: 9rem;
+    }
+  }
+
   .bf-dialog {
     opacity: 0;
     transform: translateY(8px) scale(0.98);
@@ -137,21 +156,4 @@
   .bf-dialog::backdrop {
     background: rgb(20 19 17 / 0.45);
   }
-}
-
-/* -------------------------------------------------------------------------
- * LEGADO — paleta anterior, se elimina al migrar las pantallas (fase 4).
- * ------------------------------------------------------------------------- */
-@theme {
-  --color-gold: #c9a84c;
-  --color-dark: #0a0a0a;
-  --color-bone: #f5f5f0;
-}
-
-.gold-gradient {
-  background: linear-gradient(135deg, #c9a84c 0%, #a68a3d 100%);
-}
-
-.glass-card {
-  @apply border border-white/10 bg-white/5 backdrop-blur-md;
 }

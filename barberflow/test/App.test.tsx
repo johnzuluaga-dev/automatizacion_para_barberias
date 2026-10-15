@@ -1,32 +1,139 @@
-// test/App.test.tsx
-import { vi, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
+import { AppProviders, AppRoutes } from '../src/App';
+import { getAppointments, updateAppointmentStatus, type Appointment } from '../src/lib/supabase';
+
 vi.mock('../src/lib/n8n', () => ({
   sendBookingToN8n: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 vi.mock('../src/lib/supabase', () => ({
-  getAppointments: vi.fn().mockResolvedValue([]),
-  updateAppointmentStatus: vi.fn().mockResolvedValue({}),
+  getAppointments: vi.fn(),
+  updateAppointmentStatus: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../src/components/Login', () => ({
-  __esModule: true,
-  default: () => <div>Login Mock</div>,
-}));
+const appointments: Appointment[] = [
+  {
+    id: 'a1',
+    client_name: 'Laura Gómez',
+    client_phone: '3001112233',
+    service: 'Corte Clásico',
+    barber: 'Juan Classic',
+    appointment_date: '2026-10-20',
+    appointment_time: '11:30',
+    status: 'pending',
+    created_at: '2026-10-14T10:00:00Z',
+  },
+  {
+    id: 'a2',
+    client_name: 'Pedro Ruiz',
+    client_phone: '3004445566',
+    service: 'Corte + Barba',
+    barber: 'Carlos The Blade',
+    appointment_date: '2026-10-21',
+    appointment_time: '15:00',
+    status: 'completed',
+    created_at: '2026-10-14T10:00:00Z',
+  },
+];
 
-vi.mock('../src/components/AdminDashboard', () => ({
-  __esModule: true,
-  default: () => <div>Dashboard Mock</div>,
-}));
+function renderAt(path: string) {
+  return render(
+    <AppProviders>
+      <MemoryRouter initialEntries={[path]}>
+        <AppRoutes />
+      </MemoryRouter>
+    </AppProviders>,
+  );
+}
 
-vi.mock('../src/components/CancelAppointment', () => ({
-  __esModule: true,
-  default: () => <div>Cancel Mock</div>,
-}));
+beforeEach(() => {
+  vi.mocked(getAppointments).mockResolvedValue(appointments);
+  vi.mocked(updateAppointmentStatus).mockClear();
+});
 
-import { render } from "@testing-library/react";
-import App from "../src/App";
+describe('rutas', () => {
+  test('"/" muestra la pantalla de reservas', async () => {
+    renderAt('/');
+    expect(await screen.findByRole('heading', { level: 1, name: /tu próximo corte/i })).toBeInTheDocument();
+  });
 
-test("renderiza sin romper", () => {
-  render(<App />);
+  test('"/admin" sin sesión redirige al login', async () => {
+    renderAt('/admin');
+    expect(await screen.findByRole('heading', { name: /panel administrativo/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
+  });
+
+  test('una ruta desconocida muestra 404', async () => {
+    renderAt('/no-existe');
+    expect(await screen.findByRole('heading', { name: /esta página no existe/i })).toBeInTheDocument();
+  });
+});
+
+describe('login', () => {
+  test('rechaza credenciales incorrectas', async () => {
+    const user = userEvent.setup();
+    renderAt('/login');
+    await user.type(await screen.findByLabelText(/^usuario/i), 'otro');
+    await user.type(screen.getByLabelText(/^contraseña/i), 'mal');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Usuario o contraseña incorrectos.');
+    expect(sessionStorage.getItem('barberflow_auth')).toBeNull();
+  });
+});
+
+describe('admin', () => {
+  beforeEach(() => sessionStorage.setItem('barberflow_auth', 'true'));
+
+  test('lista las citas y calcula las métricas', async () => {
+    renderAt('/admin');
+    expect(await screen.findByText('Laura Gómez')).toBeInTheDocument();
+    expect(screen.getByText('Pedro Ruiz')).toBeInTheDocument();
+    // 1 completada × $20 (cálculo heredado)
+    expect(screen.getByText('$20')).toBeInTheDocument();
+  });
+
+  test('confirma una cita pendiente', async () => {
+    const user = userEvent.setup();
+    renderAt('/admin');
+    const row = (await screen.findByText('Laura Gómez')).closest('tr');
+    expect(row).not.toBeNull();
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Confirmar' }));
+    expect(updateAppointmentStatus).toHaveBeenCalledWith('a1', 'confirmed');
+    expect(await screen.findByText('Cita confirmada')).toBeInTheDocument();
+  });
+
+  test('filtra por estado', async () => {
+    const user = userEvent.setup();
+    renderAt('/admin');
+    await screen.findByText('Laura Gómez');
+    await user.click(screen.getByRole('button', { name: /completadas/i, pressed: false }));
+    expect(screen.queryByText('Laura Gómez')).not.toBeInTheDocument();
+    expect(screen.getByText('Pedro Ruiz')).toBeInTheDocument();
+  });
+
+  test('muestra error y permite reintentar si falla la carga', async () => {
+    vi.mocked(getAppointments).mockRejectedValueOnce(new Error('Supabase error 500'));
+    const user = userEvent.setup();
+    renderAt('/admin');
+    expect(await screen.findByText('Supabase error 500')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByText('Laura Gómez')).toBeInTheDocument();
+  });
+});
+
+describe('cancelar cita', () => {
+  test('sin id no permite confirmar', async () => {
+    renderAt('/cancel');
+    expect(await screen.findByRole('button', { name: 'Confirmar Cancelación' })).toBeDisabled();
+  });
+
+  test('con id simula la cancelación', async () => {
+    const user = userEvent.setup();
+    renderAt('/cancel?id=abc');
+    await user.click(await screen.findByRole('button', { name: 'Confirmar Cancelación' }));
+    expect(await screen.findByRole('heading', { name: '¡Cancelado!' }, { timeout: 3000 })).toBeInTheDocument();
+  });
 });
