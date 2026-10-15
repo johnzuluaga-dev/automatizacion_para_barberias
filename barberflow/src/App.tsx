@@ -1,22 +1,25 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { LazyMotion, MotionConfig } from 'motion/react';
 import { PageFallback } from '@/components/layout/PageFallback';
 import { RouteErrorBoundary } from '@/components/layout/RouteErrorBoundary';
 import { ToastProvider } from '@/components/ui/toast/ToastProvider';
-import { isAuthenticated } from '@/lib/auth';
+import { AuthProvider } from '@/features/auth/AuthProvider';
+import { RequireAuth } from '@/features/auth/RequireAuth';
 
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const VerifyPage = lazy(() => import('./pages/VerifyPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const NewPasswordPage = lazy(() => import('./pages/NewPasswordPage'));
+const MyAppointmentsPage = lazy(() => import('./pages/MyAppointmentsPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
 const CancelPage = lazy(() => import('./pages/CancelPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const loadMotionFeatures = () => import('@/lib/motion-features').then((mod) => mod.default);
-
-function ProtectedRoute({ children }: { children: ReactNode }) {
-  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
-}
 
 export function AppRoutes() {
   return (
@@ -24,14 +27,29 @@ export function AppRoutes() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<BookingPage />} />
+          <Route path="/ingresar" element={<LoginPage />} />
+          {/* Ruta anterior del login, se conserva para enlaces existentes. */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
+          <Route path="/verificar" element={<VerifyPage />} />
+          <Route path="/olvide-contrasena" element={<ForgotPasswordPage />} />
+          <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
+          <Route path="/terminos" element={<TermsPage />} />
           <Route path="/cancel" element={<CancelPage />} />
+          <Route
+            path="/mis-citas"
+            element={
+              <RequireAuth>
+                <MyAppointmentsPage />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <RequireAuth role="admin">
                 <AdminPage />
-              </ProtectedRoute>
+              </RequireAuth>
             }
           />
           <Route path="*" element={<NotFoundPage />} />
@@ -45,7 +63,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <MotionConfig reducedMotion="user">
       <LazyMotion features={loadMotionFeatures} strict>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
       </LazyMotion>
     </MotionConfig>
   );

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Logo } from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { AuthNav } from '@/features/auth/AuthNav';
 
 export function Navbar({ actions }: { actions?: ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export function Navbar({ actions }: { actions?: ReactNode }) {
         </Link>
         <nav aria-label="Principal" className="flex items-center gap-1">
           {actions}
+          <AuthNav />
           <ThemeToggle />
         </nav>
       </div>

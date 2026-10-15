@@ -11,7 +11,7 @@ import { ReportsPanel } from '@/features/admin/ReportsPanel';
 import { computeStats } from '@/features/admin/status';
 import { StatsGrid } from '@/features/admin/StatsGrid';
 import { useAppointments } from '@/features/admin/useAppointments';
-import { logout } from '@/lib/auth';
+import { useAuth } from '@/features/auth/auth-context';
 import { cn } from '@/lib/utils';
 
 type Tab = 'agenda' | 'reports';
@@ -23,6 +23,7 @@ const TABS: { value: Tab; label: string; Icon: typeof FileText }[] = [
 
 export default function AdminPage() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   const { appointments, loading, error, updatingId, refresh, updateStatus } = useAppointments();
   const [activeTab, setActiveTab] = useState<Tab>('agenda');
   const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
@@ -38,9 +39,9 @@ export default function AdminPage() {
     setIsGeneratingReport(false);
   }
 
-  function handleLogout() {
-    logout();
-    navigate('/login', { replace: true });
+  async function handleLogout() {
+    await signOut();
+    navigate('/ingresar', { replace: true });
   }
 
   const tabButton = (tab: (typeof TABS)[number], layout: 'side' | 'top') => {
@@ -74,7 +75,7 @@ export default function AdminPage() {
           {TABS.map((t) => tabButton(t, 'side'))}
         </nav>
         <div className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-4">
-          <Button variant="ghost" size="sm" icon={<LogOut aria-hidden className="size-4" />} onClick={handleLogout}>
+          <Button variant="ghost" size="sm" icon={<LogOut aria-hidden className="size-4" />} onClick={() => void handleLogout()}>
             Salir
           </Button>
           <ThemeToggle />
@@ -88,7 +89,7 @@ export default function AdminPage() {
             <Logo />
             <div className="flex items-center">
               <ThemeToggle />
-              <Button variant="ghost" size="sm" icon={<LogOut aria-hidden className="size-4" />} onClick={handleLogout}>
+              <Button variant="ghost" size="sm" icon={<LogOut aria-hidden className="size-4" />} onClick={() => void handleLogout()}>
                 Salir
               </Button>
             </div>

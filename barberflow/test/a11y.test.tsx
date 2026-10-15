@@ -4,12 +4,16 @@ import axe from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import { AppProviders, AppRoutes } from '../src/App';
 import { getAppointments } from '../src/lib/supabase';
+import * as authApi from './mocks/auth-api';
 
 vi.mock('../src/lib/n8n', () => ({ sendBookingToN8n: vi.fn() }));
 vi.mock('../src/lib/supabase', () => ({
   getAppointments: vi.fn(),
   updateAppointmentStatus: vi.fn(),
+  getMyAppointments: vi.fn().mockResolvedValue([]),
+  getTakenSlots: vi.fn().mockResolvedValue([]),
 }));
+vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
 
 async function auditAt(path: string, ready: () => Promise<unknown>) {
   const { container } = render(
@@ -26,6 +30,7 @@ async function auditAt(path: string, ready: () => Promise<unknown>) {
 }
 
 beforeEach(() => {
+  authApi.resetAuthMock();
   vi.mocked(getAppointments).mockResolvedValue([
     {
       id: 'a1',
@@ -46,8 +51,26 @@ describe('accesibilidad (axe-core)', () => {
     expect(await auditAt('/', () => screen.findByRole('heading', { level: 1 }))).toEqual([]);
   });
 
-  test('login', async () => {
-    expect(await auditAt('/login', () => screen.findByRole('button', { name: 'Ingresar' }))).toEqual([]);
+  test('ingresar', async () => {
+    expect(await auditAt('/ingresar', () => screen.findByRole('button', { name: 'Ingresar' }))).toEqual([]);
+  });
+
+  test('registro', async () => {
+    expect(await auditAt('/registro', () => screen.findByRole('button', { name: 'Crear cuenta' }))).toEqual([]);
+  });
+
+  test('verificación', async () => {
+    sessionStorage.setItem('barberflow_pending_verification', JSON.stringify({ purpose: 'signup', target: 'a@b.co', sentAt: Date.now() }));
+    expect(await auditAt('/verificar', () => screen.findByRole('button', { name: 'Verificar' }))).toEqual([]);
+  });
+
+  test('recuperar contraseña', async () => {
+    expect(await auditAt('/olvide-contrasena', () => screen.findByRole('button', { name: 'Enviar instrucciones' }))).toEqual([]);
+  });
+
+  test('mis citas', async () => {
+    authApi.setTestSession({ role: 'client' });
+    expect(await auditAt('/mis-citas', () => screen.findByText('No tienes citas próximas'))).toEqual([]);
   });
 
   test('cancelar cita', async () => {
@@ -55,7 +78,7 @@ describe('accesibilidad (axe-core)', () => {
   });
 
   test('admin', async () => {
-    sessionStorage.setItem('barberflow_auth', 'true');
+    authApi.setTestSession({ role: 'admin' });
     expect(await auditAt('/admin', () => screen.findByText('Laura Gómez'))).toEqual([]);
   });
 });

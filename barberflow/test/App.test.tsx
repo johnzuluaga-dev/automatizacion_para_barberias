@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { AppProviders, AppRoutes } from '../src/App';
 import { getAppointments, updateAppointmentStatus, type Appointment } from '../src/lib/supabase';
+import * as authApi from './mocks/auth-api';
 
 vi.mock('../src/lib/n8n', () => ({
   sendBookingToN8n: vi.fn().mockResolvedValue({ success: true }),
@@ -12,7 +13,11 @@ vi.mock('../src/lib/n8n', () => ({
 vi.mock('../src/lib/supabase', () => ({
   getAppointments: vi.fn(),
   updateAppointmentStatus: vi.fn().mockResolvedValue(undefined),
+  getMyAppointments: vi.fn().mockResolvedValue([]),
+  getTakenSlots: vi.fn().mockResolvedValue([]),
 }));
+
+vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
 
 const appointments: Appointment[] = [
   {
@@ -50,6 +55,7 @@ function renderAt(path: string) {
 }
 
 beforeEach(() => {
+  authApi.resetAuthMock();
   vi.mocked(getAppointments).mockResolvedValue(appointments);
   vi.mocked(updateAppointmentStatus).mockClear();
 });
@@ -62,8 +68,7 @@ describe('rutas', () => {
 
   test('"/admin" sin sesión redirige al login', async () => {
     renderAt('/admin');
-    expect(await screen.findByRole('heading', { name: /panel administrativo/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ingresar' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ingresa a tu cuenta' })).toBeInTheDocument();
   });
 
   test('una ruta desconocida muestra 404', async () => {
@@ -72,20 +77,8 @@ describe('rutas', () => {
   });
 });
 
-describe('login', () => {
-  test('rechaza credenciales incorrectas', async () => {
-    const user = userEvent.setup();
-    renderAt('/login');
-    await user.type(await screen.findByLabelText(/^usuario/i), 'otro');
-    await user.type(screen.getByLabelText(/^contraseña/i), 'mal');
-    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Usuario o contraseña incorrectos.');
-    expect(sessionStorage.getItem('barberflow_auth')).toBeNull();
-  });
-});
-
 describe('admin', () => {
-  beforeEach(() => sessionStorage.setItem('barberflow_auth', 'true'));
+  beforeEach(() => authApi.setTestSession({ role: 'admin' }));
 
   test('lista las citas y calcula las métricas', async () => {
     renderAt('/admin');

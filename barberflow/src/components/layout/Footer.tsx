@@ -9,9 +9,11 @@ export function Footer() {
           Automatización
         </p>
         <div className="flex items-center gap-5">
-          <p>Confirmaciones y recordatorios por WhatsApp</p>
-          <Link to="/login" className="rounded-sm underline-offset-4 hover:text-ink hover:underline">
-            Admin
+          <Link to="/terminos" className="rounded-sm underline-offset-4 hover:text-ink hover:underline">
+            Términos y datos
+          </Link>
+          <Link to="/admin" className="rounded-sm underline-offset-4 hover:text-ink hover:underline">
+            Panel del equipo
           </Link>
         </div>
       </div>
