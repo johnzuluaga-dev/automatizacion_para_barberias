@@ -1,24 +1,25 @@
 // test/App.test.tsx
-jest.mock('../src/lib/n8n', () => ({
-  sendBookingToN8n: jest.fn().mockResolvedValue({ success: true }),
+import { vi, test } from 'vitest';
+vi.mock('../src/lib/n8n', () => ({
+  sendBookingToN8n: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-jest.mock('../src/lib/supabase', () => ({
-  getAppointments: jest.fn().mockResolvedValue([]),
-  updateAppointmentStatus: jest.fn().mockResolvedValue({}),
+vi.mock('../src/lib/supabase', () => ({
+  getAppointments: vi.fn().mockResolvedValue([]),
+  updateAppointmentStatus: vi.fn().mockResolvedValue({}),
 }));
 
-jest.mock('../src/components/Login', () => ({
+vi.mock('../src/components/Login', () => ({
   __esModule: true,
   default: () => <div>Login Mock</div>,
 }));
 
-jest.mock('../src/components/AdminDashboard', () => ({
+vi.mock('../src/components/AdminDashboard', () => ({
   __esModule: true,
   default: () => <div>Dashboard Mock</div>,
 }));
 
-jest.mock('../src/components/CancelAppointment', () => ({
+vi.mock('../src/components/CancelAppointment', () => ({
   __esModule: true,
   default: () => <div>Cancel Mock</div>,
 }));

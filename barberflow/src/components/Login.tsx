@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Scissors, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
 

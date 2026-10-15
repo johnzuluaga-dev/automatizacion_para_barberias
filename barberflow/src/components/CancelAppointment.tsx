@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { XCircle, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 

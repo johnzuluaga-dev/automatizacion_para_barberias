@@ -1,5 +1,5 @@
 /**
- * Cliente de Supabase para BarberFlow
+ * Cliente REST de Supabase para BarberFlow
  */
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -9,6 +9,8 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('Error: Variables de Supabase no definidas en .env');
 }
 
+export type AppointmentStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
+
 export interface Appointment {
   id: string;
   client_name: string;
@@ -17,19 +19,19 @@ export interface Appointment {
   barber: string;
   appointment_date: string;
   appointment_time: string;
-  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
+  status: AppointmentStatus;
   created_at: string;
   cancel_token?: string;
 }
 
-async function supabaseFetch(path: string, options: RequestInit = {}) {
+async function supabaseFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
     ...options,
     headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
       'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
+      Prefer: 'return=representation',
       ...options.headers,
     },
   });
@@ -40,14 +42,14 @@ async function supabaseFetch(path: string, options: RequestInit = {}) {
   }
 
   const text = await res.text();
-  return text ? JSON.parse(text) : [];
+  return (text ? JSON.parse(text) : []) as T;
 }
 
 export async function getAppointments(): Promise<Appointment[]> {
-  return supabaseFetch('/appointments?order=appointment_date.desc,appointment_time.desc');
+  return supabaseFetch<Appointment[]>('/appointments?order=appointment_date.desc,appointment_time.desc');
 }
 
-export async function updateAppointmentStatus(id: string, status: string): Promise<void> {
+export async function updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<void> {
   await supabaseFetch(`/appointments?id=eq.${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),

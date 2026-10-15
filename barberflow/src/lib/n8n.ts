@@ -18,7 +18,10 @@ export interface BookingData {
   price?: number;
 }
 
-export async function sendBookingToN8n(bookingData: BookingData): Promise<any> {
+/** Respuesta del webhook; n8n puede devolver cualquier JSON o un cuerpo vacío. */
+export type N8nResponse = Record<string, unknown>;
+
+export async function sendBookingToN8n(bookingData: BookingData): Promise<N8nResponse> {
   try {
     const payload = {
       tipo_evento: 'nueva_cita',
@@ -33,18 +36,13 @@ export async function sendBookingToN8n(bookingData: BookingData): Promise<any> {
       source: 'BarberFlow Web',
     };
 
-    console.log('Enviando a n8n:', payload);
-    console.log('URL:', N8N_WEBHOOK_URL);
-    
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    console.log('Response status:', response.status);
     const responseText = await response.text();
-    console.log('Response text:', responseText);
 
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -54,7 +52,7 @@ export async function sendBookingToN8n(bookingData: BookingData): Promise<any> {
       return { success: true, message: 'Cita enviada' };
     }
 
-    return JSON.parse(responseText);
+    return JSON.parse(responseText) as N8nResponse;
   } catch (error) {
     console.error('Error al enviar cita a n8n:', error);
     throw error;

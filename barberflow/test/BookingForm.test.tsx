@@ -1,6 +1,7 @@
 // test/BookingForm.test.tsx
-jest.mock('../src/lib/n8n', () => ({
-  sendBookingToN8n: jest.fn().mockResolvedValue({ success: true }),
+import { vi, test, describe, expect } from 'vitest';
+vi.mock('../src/lib/n8n', () => ({
+  sendBookingToN8n: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 import { render, screen, fireEvent, act } from "@testing-library/react";
@@ -37,12 +38,12 @@ describe("BookingForm", () => {
     });
 
     const selects = screen.getAllByRole("combobox");
-    fireEvent.change(selects[0], { target: { value: "Corte Clásico" } });
-    fireEvent.change(selects[1], { target: { value: "Carlos The Blade" } });
+    fireEvent.change(selects[0] as HTMLElement, { target: { value: "Corte Clásico" } });
+    fireEvent.change(selects[1] as HTMLElement, { target: { value: "Carlos The Blade" } });
 
     const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
     const timeInput = document.querySelector('input[type="time"]') as HTMLInputElement;
-    fireEvent.change(dateInput, { target: { value: "2026-05-20" } });
+    fireEvent.change(dateInput, { target: { value: "2099-05-20" } });
     fireEvent.change(timeInput, { target: { value: "10:00" } });
 
     await act(async () => {

@@ -1,0 +1,90 @@
+/*
+ * Design tokens de BarberFlow.
+ * Paleta "Silla de barbero": neutros cálidos de papel, un acento bermellón
+ * y un verde cuero secundario. Todo par texto/fondo cumple WCAG AA.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Superficies */
+  --bg: #f5f2ec;
+  --surface: #ffffff;
+  --surface-2: #efebe3;
+  --line: #e4ded3;
+  --line-strong: #cfc7b9;
+
+  /* Texto */
+  --ink: #1a1814;
+  --muted: #6b6458;
+
+  /* Acento principal: bermellón */
+  --accent: #c2401c;
+  --accent-hover: #a83615;
+  --accent-ink: #ffffff;
+  --accent-soft: #fcefe9;
+
+  /* Acento secundario: verde cuero */
+  --accent-2: #1f5c52;
+  --accent-2-soft: #dcebe7;
+
+  /* Estados */
+  --success: #1e7046;
+  --success-soft: #dff0e6;
+  --warning: #8f5207;
+  --warning-soft: #f8ead2;
+  --danger: #b42318;
+  --danger-soft: #fbe3e0;
+  --info: #1f5c52;
+  --info-soft: #dcebe7;
+
+  /* Forma */
+  --round-sm: 8px;
+  --round-md: 12px;
+  --round-lg: 16px;
+  --round-xl: 22px;
+
+  --elev-sm: 0 1px 2px rgb(26 24 20 / 0.05);
+  --elev-md: 0 1px 2px rgb(26 24 20 / 0.04), 0 8px 24px -12px rgb(26 24 20 / 0.12);
+  --elev-lg: 0 2px 4px rgb(26 24 20 / 0.04), 0 24px 48px -24px rgb(26 24 20 / 0.22);
+
+  /* Movimiento */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 250ms;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #141311;
+  --surface: #1d1b18;
+  --surface-2: #26231f;
+  --line: #2c2925;
+  --line-strong: #3d3933;
+
+  --ink: #ede8df;
+  --muted: #a39c90;
+
+  --accent: #f26b43;
+  --accent-hover: #f5835f;
+  --accent-ink: #141311;
+  --accent-soft: #3a2119;
+
+  --accent-2: #6fb5a6;
+  --accent-2-soft: #1b2e2a;
+
+  --success: #5cc98b;
+  --success-soft: #17291f;
+  --warning: #f0b450;
+  --warning-soft: #2e2414;
+  --danger: #f58a7d;
+  --danger-soft: #331b18;
+  --info: #6fb5a6;
+  --info-soft: #1b2e2a;
+
+  --elev-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --elev-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.5);
+  --elev-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 24px 48px -24px rgb(0 0 0 / 0.6);
+}

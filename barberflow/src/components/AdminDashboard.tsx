@@ -45,6 +45,7 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- legado, se reemplaza en la fase 4
     fetchAppointments();
   }, []);
 
@@ -57,14 +58,14 @@ export default function AdminDashboard() {
     completed: appointments.filter(a => a.status === 'completed').length,
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
+  const handleUpdateStatus = async (id: string, newStatus: Appointment['status']) => {
     setUpdatingId(id);
     try {
       await updateAppointmentStatus(id, newStatus);
       setAppointments(prev =>
-        prev.map(a => a.id === id ? { ...a, status: newStatus as Appointment['status'] } : a)
+        prev.map(a => a.id === id ? { ...a, status: newStatus } : a)
       );
-    } catch (err) {
+    } catch {
       alert('Error al actualizar el estado. Intenta de nuevo.');
     } finally {
       setUpdatingId(null);
