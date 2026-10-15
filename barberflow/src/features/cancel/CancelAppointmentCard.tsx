@@ -5,6 +5,7 @@ import { CalendarX2, Check, CircleAlert, LinkIcon } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { buttonStyles } from '@/components/ui/button-styles';
+import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
@@ -50,7 +51,7 @@ export function CancelAppointmentCard() {
   };
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-6 shadow-md sm:p-8" aria-live="polite">
+    <Card className="rounded-xl p-6 shadow-md sm:p-8" aria-live="polite">
       <AnimatePresence mode="wait" initial={false}>
         {status === 'idle' && (
           <m.div key="idle" {...fade}>
@@ -113,6 +114,6 @@ export function CancelAppointmentCard() {
           </m.div>
         )}
       </AnimatePresence>
-    </div>
+    </Card>
   );
 }

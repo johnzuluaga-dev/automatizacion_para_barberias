@@ -1,102 +1,62 @@
-# 🧪 Pruebas Unitarias — BookingForm
+# Pruebas — Frontend BarberFlow
 
-Documentación de las pruebas unitarias del componente `BookingForm` del proyecto **BarberFlow**.
+Pruebas del frontend (`barberflow/`) con **Vitest** y **React Testing Library** en un entorno `jsdom`.
 
----
-
-## 📁 Archivo de pruebas
-
-```
-src/BookingForm.test.tsx
-```
-
-## 🛠️ Tecnologías utilizadas
-
-| Herramienta | Versión | Uso |
-|---|---|---|
-| Jest | latest | Framework de testing |
-| React Testing Library | latest | Renderizado y consultas del DOM |
-| ts-jest | latest | Soporte TypeScript en Jest |
-
----
-
-## ⚙️ Configuración de timers
-
-```ts
-beforeEach(() => {
-  jest.useFakeTimers();
-});
-
-afterEach(() => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
-});
-```
-
-Se usan **fake timers** para controlar el `setTimeout` del componente sin esperar tiempo real. Antes de cada test se activan, y después de cada test se ejecutan los timers pendientes y se restauran los reales para evitar fugas entre tests.
-
----
-
-## 🧩 Pruebas
-
-### 1. `renderiza el formulario correctamente`
-
-**Descripción:** Verifica que el componente se renderiza con todos los elementos esenciales visibles.
-
-**Qué valida:**
-- El título **BarberFlow** está presente en el DOM.
-- El input de **nombre completo** está presente.
-- El input de **teléfono** está presente.
-- El botón **Agendar Cita** está presente.
-
----
-
-### 2. `permite escribir en los inputs`
-
-**Descripción:** Verifica que los campos de texto aceptan y reflejan correctamente la entrada del usuario.
-
-**Qué valida:**
-- Al escribir `"Juan Pérez"` en el campo de nombre, el input muestra ese valor.
-- Al escribir `"123456789"` en el campo de teléfono, el input muestra ese valor.
-
----
-
-### 3. `envía el formulario y muestra confirmación`
-
-**Descripción:** Verifica el flujo completo de reserva: llenado del formulario, envío y visualización del mensaje de éxito.
-
-**Qué valida:**
-- Se pueden llenar los campos de nombre y teléfono.
-- Se puede seleccionar un **servicio** y un **barbero** desde los dropdowns.
-- Se puede ingresar una **fecha** y una **hora** de cita.
-- Al hacer clic en el botón de envío, después de 1500ms aparece el mensaje **"¡Cita Confirmada!"**.
-
-**Nota técnica:** El avance del timer se envuelve en `act()` para que React procese correctamente las actualizaciones de estado generadas por el `setTimeout` interno del componente.
-
----
-
-## ▶️ Cómo ejecutar las pruebas
+## Cómo ejecutarlas
 
 ```bash
-npm test
+cd barberflow
+npm test            # una sola corrida
+npm run test:watch  # modo observación
+npm run check       # typecheck + lint + pruebas + build
 ```
 
-### Resultado esperado
+## Herramientas
 
-```
-PASS  src/BookingForm.test.tsx
-  BookingForm
-    ✓ renderiza el formulario correctamente
-    ✓ permite escribir en los inputs
-    ✓ envía el formulario y muestra confirmación
+| Herramienta | Uso |
+|---|---|
+| Vitest 5 | Runner de pruebas (comparte la configuración de Vite) |
+| React Testing Library 16 | Renderizado y consultas accesibles del DOM |
+| @testing-library/user-event 14 | Interacciones reales: clics, teclado, escritura |
+| @testing-library/jest-dom 7 | Matchers como `toBeDisabled` o `toHaveAccessibleDescription` |
 
-Tests: 3 passed, 3 total
-```
+La configuración está en `vite.config.ts` (bloque `test`) y en `test/setup.ts`.
 
----
+## Archivos
 
-## 📌 Notas
+### `test/BookingForm.test.tsx` — Reserva de citas
 
-- El componente `BookingForm` usa un `setTimeout` de **1500ms** para simular el envío. En los tests se controla con `jest.useFakeTimers()` para no depender de tiempo real.
-- Se usa `act()` al avanzar los timers para evitar el warning *"An update was not wrapped in act(...)"*.
-- Los inputs de tipo `date` y `time` se seleccionan filtrando por `input.type` dentro de `getAllByDisplayValue("")` ya que no tienen placeholder accesible.
+La fecha del sistema se fija en **miércoles 14 de octubre de 2026, 9:00** (`vi.setSystemTime`), así las pruebas no dependen del día en que se ejecutan. La versión anterior fallaba porque usaba una fecha fija que ya había pasado.
+
+| Prueba | Qué valida |
+|---|---|
+| renderiza el formulario correctamente | Título, campos de nombre y teléfono, botón **Agendar Cita** |
+| permite escribir en los inputs | Los campos reflejan lo que escribe el usuario |
+| bloquea los domingos | El domingo aparece como "cerrado" y deshabilitado |
+| ofrece turnos de 30 minutos… | 18 turnos de 11:00 a 19:30, deshabilitados hasta elegir día |
+| muestra errores y no envía si faltan datos | Mensajes por campo y resumen; no se llama a n8n |
+| envía el formulario con el mismo contrato… | Payload exacto hacia n8n (incluye `price`) y pantalla **¡Cita Confirmada!** |
+| muestra el error del servicio si n8n falla | Alerta con el mensaje de error; el botón vuelve a estar disponible |
+
+### `test/App.test.tsx` — Rutas y pantallas
+
+| Prueba | Qué valida |
+|---|---|
+| `/` muestra la pantalla de reservas | Carga perezosa de la ruta principal |
+| `/admin` sin sesión redirige al login | Ruta protegida por `sessionStorage` |
+| una ruta desconocida muestra 404 | Página de no encontrado |
+| rechaza credenciales incorrectas | Mensaje de error y sin sesión |
+| lista las citas y calcula las métricas | Datos de Supabase (simulado) y cálculo de ingresos |
+| confirma una cita pendiente | Llama a `updateAppointmentStatus` y muestra notificación |
+| filtra por estado | Filtro de la agenda |
+| muestra error y permite reintentar | Estado de error y botón **Reintentar** |
+| cancelar cita sin id / con id | Botón deshabilitado sin id; flujo simulado con id |
+
+### `test/ui.test.tsx` — Componentes base
+
+Estado de carga del botón, asociación accesible de label y error en `TextField`, y notificaciones (`useToast`).
+
+## Notas
+
+- `src/lib/n8n` y `src/lib/supabase` se simulan con `vi.mock`: las pruebas nunca llaman al backend real.
+- Las rutas usan `React.lazy`; `test/setup.ts` sube el `asyncUtilTimeout` a 5 s para la primera importación en frío.

@@ -12,7 +12,7 @@ interface TextFieldProps extends ComponentProps<'input'> {
 
 export const inputStyles =
   'h-12 w-full rounded-md border border-line-strong bg-surface px-3.5 text-base text-ink ' +
-  'placeholder:text-muted/80 transition-[border-color,box-shadow] duration-150 ease-out ' +
+  'placeholder:text-muted transition-[border-color,box-shadow] duration-150 ease-out ' +
   'hover:border-ink/40 focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 ' +
   'aria-invalid:border-danger aria-invalid:focus:ring-danger/20';
 

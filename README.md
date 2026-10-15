@@ -75,6 +75,22 @@ Control de versiones
 
 ---
 
+# 🖥 Frontend: cómo correrlo
+
+La app web está en `barberflow/` (Vite + React + TypeScript + Tailwind CSS). Requiere Node 24 (ver `.nvmrc`).
+
+```bash
+cd barberflow
+cp .env.example .env   # completa las variables
+npm install
+npm run dev            # http://localhost:3000
+npm run check          # typecheck + lint + pruebas + build
+```
+
+Más detalle de las pruebas en [TESTING.md](TESTING.md).
+
+---
+
 # 🔄 Flujo del Sistema
 
 1. El cliente accede a la página web.

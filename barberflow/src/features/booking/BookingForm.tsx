@@ -79,7 +79,7 @@ export function BookingForm() {
       noValidate
       onSubmit={handleSubmit}
       aria-label="Agendar cita"
-      className="mx-auto grid max-w-6xl grid-cols-1 gap-x-12 px-4 pt-10 pb-36 sm:px-6 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_22rem] lg:px-8 lg:pb-20"
+      className="mx-auto grid max-w-6xl grid-cols-1 gap-x-12 px-4 pt-10 pb-12 sm:px-6 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_22rem] lg:px-8 lg:pb-20"
     >
       <div className="flex min-w-0 flex-col gap-10">
         <BookingHero />

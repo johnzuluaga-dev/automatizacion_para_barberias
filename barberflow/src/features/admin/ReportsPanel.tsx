@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AnimatePresence, m } from 'motion/react';
 import { FileText, Sparkles } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import type { Report } from './reports';
@@ -15,14 +16,14 @@ export function ReportsPanel({ reports, generating }: ReportsPanelProps) {
   return (
     <section aria-label="Reportes" className="flex flex-col gap-4">
       {generating && (
-        <div role="status" className="rounded-lg border border-line bg-surface p-6">
+        <Card role="status" className="p-6">
           <p className="flex items-center gap-2 text-sm text-muted">
             <Sparkles aria-hidden className="size-4 text-accent" />
             Analizando la agenda...
           </p>
           <Skeleton className="mt-4 h-4 w-3/4" />
           <Skeleton className="mt-2 h-4 w-1/2" />
-        </div>
+        </Card>
       )}
 
       {reports.length === 0 && !generating && (

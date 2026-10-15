@@ -93,7 +93,7 @@ export default function AdminPage() {
               </Button>
             </div>
           </div>
-          <nav aria-label="Secciones del panel" className="flex gap-1 px-4 pb-3">
+          <nav aria-label="Pestañas del panel" className="flex gap-1 px-4 pb-3">
             <div className="flex w-full gap-1 rounded-lg bg-surface-2 p-1">{TABS.map((t) => tabButton(t, 'top'))}</div>
           </nav>
         </header>

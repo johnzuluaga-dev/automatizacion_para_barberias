@@ -129,6 +129,10 @@
     html:has(.bf-mobile-bar) {
       scroll-padding-bottom: 9rem;
     }
+
+    body:has(.bf-mobile-bar) {
+      padding-bottom: 5.5rem;
+    }
   }
 
   .bf-dialog {
