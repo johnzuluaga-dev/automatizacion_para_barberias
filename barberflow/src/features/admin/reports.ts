@@ -1,3 +1,4 @@
+import { toIsoDate } from '@/features/booking/schedule';
 import type { AppointmentStats } from './status';
 
 export interface Report {
@@ -8,7 +9,8 @@ export interface Report {
   stats?: Pick<AppointmentStats, 'confirmed' | 'completed' | 'cancelled' | 'revenue'>;
 }
 
-const today = () => new Date().toISOString().split('T')[0] ?? '';
+/** Fecha local (toISOString usaría UTC y en Colombia saltaría al día siguiente desde las 7 p. m.). */
+const today = () => toIsoDate(new Date());
 
 export const MOCK_REPORTS: Report[] = [
   {
