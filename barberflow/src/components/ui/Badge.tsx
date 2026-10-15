@@ -3,13 +3,14 @@ import { cn } from '@/lib/utils';
 
 export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
 
-const tones: Record<BadgeTone, string> = {
-  neutral: 'bg-surface-2 text-muted',
-  accent: 'bg-accent-soft text-accent',
-  success: 'bg-success-soft text-success-text',
-  warning: 'bg-warning-soft text-warning-text',
-  danger: 'bg-danger-soft text-danger-text',
-  info: 'bg-info-soft text-info-text',
+/** Texto con la variante AA; el punto lleva el color de marca del estado. */
+const tones: Record<BadgeTone, { box: string; dot: string }> = {
+  neutral: { box: 'bg-surface-2 text-muted', dot: 'bg-muted' },
+  accent: { box: 'bg-accent-soft text-accent-soft-ink', dot: 'bg-accent' },
+  success: { box: 'bg-success-soft text-success-text', dot: 'bg-success' },
+  warning: { box: 'bg-warning-soft text-warning-text', dot: 'bg-warning' },
+  danger: { box: 'bg-danger-soft text-danger-text', dot: 'bg-danger' },
+  info: { box: 'bg-info-soft text-info-text', dot: 'bg-info' },
 };
 
 interface BadgeProps {
@@ -25,11 +26,11 @@ export function Badge({ tone = 'neutral', dot = false, className, children }: Ba
     <span
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap',
-        tones[tone],
+        tones[tone].box,
         className,
       )}
     >
-      {dot && <span aria-hidden className="size-1.5 rounded-full bg-current" />}
+      {dot && <span aria-hidden className={cn('size-1.5 rounded-full', tones[tone].dot)} />}
       {children}
     </span>
   );
