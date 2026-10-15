@@ -71,8 +71,11 @@ export default function MyAppointmentsPage() {
   const [toCancel, setToCancel] = useState<Appointment | null>(null);
   const [today] = useState(() => toIsoDate(new Date()));
 
-  const upcoming = appointments.filter((a) => isUpcoming(a, today)).reverse();
-  const past = appointments.filter((a) => !isUpcoming(a, today));
+  const byDate = (a: Appointment, b: Appointment) =>
+    `${a.appointment_date} ${a.appointment_time}`.localeCompare(`${b.appointment_date} ${b.appointment_time}`);
+  // Próximas: la más cercana primero. Anteriores: la más reciente primero.
+  const upcoming = appointments.filter((a) => isUpcoming(a, today)).sort(byDate);
+  const past = appointments.filter((a) => !isUpcoming(a, today)).sort((a, b) => byDate(b, a));
 
   return (
     <PublicLayout>

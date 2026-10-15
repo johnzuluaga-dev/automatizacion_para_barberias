@@ -87,6 +87,8 @@ npm run dev            # http://localhost:3000
 npm run check          # typecheck + lint + pruebas + build
 ```
 
+Las cuentas, roles y permisos usan **Supabase Auth**. Para activarlos sigue [supabase/README.md](supabase/README.md) (SQL a ejecutar, configuración del panel, correo y plantillas).
+
 Más detalle de las pruebas en [TESTING.md](TESTING.md).
 
 ---
