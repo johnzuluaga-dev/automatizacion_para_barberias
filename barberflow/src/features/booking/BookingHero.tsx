@@ -1,9 +1,9 @@
-import { BellRing, CalendarX2, MessageCircle } from 'lucide-react';
+import { CalendarCheck, CalendarX2, Clock3 } from 'lucide-react';
 
 const facts = [
-  { Icon: MessageCircle, text: 'Confirmación por WhatsApp' },
-  { Icon: BellRing, text: 'Recordatorio antes de tu cita' },
-  { Icon: CalendarX2, text: 'Cancelación sencilla' },
+  { Icon: Clock3, text: 'Solo ves horas libres' },
+  { Icon: CalendarCheck, text: 'Tus citas en un solo lugar' },
+  { Icon: CalendarX2, text: 'Cancela desde tu cuenta' },
 ];
 
 export function BookingHero() {
@@ -17,7 +17,7 @@ export function BookingHero() {
         Tu próximo corte, <span className="text-accent">en un minuto.</span>
       </h1>
       <p className="mt-5 max-w-xl text-lg text-muted">
-        Elige servicio, barbero y hora. Nosotros nos encargamos del resto.
+        Elige servicio, barbero y hora. La barbería confirma tu cita y la ves en tu cuenta.
       </p>
       <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
         {facts.map(({ Icon, text }) => (

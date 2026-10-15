@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { AppProviders, AppRoutes } from '../src/App';
-import { getAppointments, updateAppointmentStatus, type Appointment } from '../src/lib/supabase';
+import { cancelByToken, getAppointments, updateAppointmentStatus, type Appointment } from '../src/lib/supabase';
 import * as authApi from './mocks/auth-api';
 
 vi.mock('../src/lib/n8n', () => ({
@@ -15,6 +15,7 @@ vi.mock('../src/lib/supabase', () => ({
   updateAppointmentStatus: vi.fn().mockResolvedValue(undefined),
   getMyAppointments: vi.fn().mockResolvedValue([]),
   getTakenSlots: vi.fn().mockResolvedValue([]),
+  cancelByToken: vi.fn(),
 }));
 
 vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
@@ -123,10 +124,20 @@ describe('cancelar cita', () => {
     expect(await screen.findByRole('button', { name: 'Confirmar Cancelación' })).toBeDisabled();
   });
 
-  test('con id simula la cancelación', async () => {
+  test('con un enlace válido cancela la cita', async () => {
+    vi.mocked(cancelByToken).mockResolvedValueOnce(true);
     const user = userEvent.setup();
     renderAt('/cancel?id=abc');
     await user.click(await screen.findByRole('button', { name: 'Confirmar Cancelación' }));
-    expect(await screen.findByRole('heading', { name: '¡Cancelado!' }, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '¡Cancelado!' })).toBeInTheDocument();
+    expect(cancelByToken).toHaveBeenCalledWith('abc');
+  });
+
+  test('con un enlace vencido explica el problema', async () => {
+    vi.mocked(cancelByToken).mockResolvedValueOnce(false);
+    const user = userEvent.setup();
+    renderAt('/cancel?id=viejo');
+    await user.click(await screen.findByRole('button', { name: 'Confirmar Cancelación' }));
+    expect(await screen.findByText(/no encontramos una cita activa/i)).toBeInTheDocument();
   });
 });

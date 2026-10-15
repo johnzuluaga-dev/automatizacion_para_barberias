@@ -17,9 +17,19 @@ interface DateTimePickerProps {
   onTimeChange: (slot: string) => void;
   dateError?: string;
   timeError?: string;
+  /** Horas ya reservadas para el barbero y día elegidos. */
+  takenSlots?: ReadonlySet<string>;
 }
 
-export function DateTimePicker({ date, time, onDateChange, onTimeChange, dateError, timeError }: DateTimePickerProps) {
+export function DateTimePicker({
+  date,
+  time,
+  onDateChange,
+  onTimeChange,
+  dateError,
+  timeError,
+  takenSlots,
+}: DateTimePickerProps) {
   const [now] = useState(() => new Date());
   const today = toIsoDate(now);
 
@@ -39,7 +49,8 @@ export function DateTimePicker({ date, time, onDateChange, onTimeChange, dateErr
 
   const slots = TIME_SLOTS.map((slot) => {
     const past = Boolean(date) && isPastSlot(date, slot, now);
-    return { value: slot, label: slot, disabled: !date || past, past };
+    const taken = !past && Boolean(takenSlots?.has(slot));
+    return { value: slot, label: taken ? `${slot}, ocupada` : slot, disabled: !date || past || taken, past: past || taken };
   });
 
   return (

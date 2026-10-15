@@ -83,7 +83,7 @@ export function BookingTicket({ values, action }: BookingTicketProps) {
       </div>
 
       <p className="mt-3 hidden text-xs text-muted lg:block">
-        Te confirmamos por WhatsApp y te recordamos antes de la cita.
+        Queda pendiente hasta que la barbería la confirme.
       </p>
     </aside>
   );

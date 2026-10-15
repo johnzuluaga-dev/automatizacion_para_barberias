@@ -11,5 +11,5 @@ afterEach(() => {
 // jsdom no implementa scrollTo.
 window.scrollTo = () => {};
 
-// Las rutas cargan con lazy(); el primer import en frío puede tardar más de 1 s.
-configure({ asyncUtilTimeout: 5000 });
+// Las rutas cargan con lazy(); el primer import en frío puede tardar varios segundos.
+configure({ asyncUtilTimeout: 10000 });

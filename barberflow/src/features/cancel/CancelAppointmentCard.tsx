@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { buttonStyles } from '@/components/ui/button-styles';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
+import { cancelByToken } from '@/lib/supabase';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -38,16 +39,23 @@ export function CancelAppointmentCard() {
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (!appointmentId) return;
 
     setStatus('loading');
-
-    // Simulación de cancelación (igual que la versión anterior).
-    setTimeout(() => {
-      setStatus('success');
-      setMessage('Tu cita ha sido cancelada exitosamente (Simulación)');
-    }, 1500);
+    try {
+      const cancelled = await cancelByToken(appointmentId);
+      if (cancelled) {
+        setStatus('success');
+        setMessage('Tu cita ha sido cancelada exitosamente.');
+      } else {
+        setStatus('error');
+        setMessage('No encontramos una cita activa con este enlace. Puede que ya estuviera cancelada o que la fecha ya haya pasado.');
+      }
+    } catch (err) {
+      setStatus('error');
+      setMessage(err instanceof Error ? err.message : 'No pudimos cancelar la cita.');
+    }
   };
 
   return (
@@ -66,12 +74,12 @@ export function CancelAppointmentCard() {
               <Alert tone="info" className="mt-5">
                 <span className="inline-flex items-center gap-1.5">
                   <LinkIcon aria-hidden className="size-3.5" />
-                  Abre esta página desde el enlace de cancelación que recibiste por WhatsApp.
+                  Abre esta página desde el enlace de cancelación de tu cita. Si tienes cuenta, también puedes cancelar desde Mis citas.
                 </span>
               </Alert>
             )}
             <div className="mt-7 flex flex-col gap-2">
-              <Button variant="danger" size="lg" className="w-full" onClick={handleCancel} disabled={!appointmentId}>
+              <Button variant="danger" size="lg" className="w-full" onClick={() => void handleCancel()} disabled={!appointmentId}>
                 Confirmar Cancelación
               </Button>
               <Link to="/" className={buttonStyles({ variant: 'secondary', size: 'lg', className: 'w-full' })}>

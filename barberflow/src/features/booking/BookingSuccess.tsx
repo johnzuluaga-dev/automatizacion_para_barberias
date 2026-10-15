@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { m } from 'motion/react';
-import { Check, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router';
+import { CalendarDays, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { buttonStyles } from '@/components/ui/button-styles';
 import { findService, formatPrice } from './catalog';
 import { Perforation, TicketDetails } from './BookingTicket';
 import type { BookingFormValues } from './validation';
@@ -38,10 +40,10 @@ export function BookingSuccess({ values, onReset }: BookingSuccessProps) {
         </m.span>
 
         <h1 ref={headingRef} tabIndex={-1} className="mt-5 text-3xl font-bold focus:outline-none">
-          ¡Cita Confirmada!
+          ¡Cita agendada!
         </h1>
         <p className="mt-2 text-muted">
-          Tu cita ha sido registrada. Recibirás un mensaje de WhatsApp con los detalles en breve.
+          Quedó <strong className="font-semibold text-ink">pendiente</strong> hasta que la barbería la confirme. La verás en Mis citas.
         </p>
 
         <Perforation className="-mx-6 sm:-mx-8" />
@@ -52,14 +54,15 @@ export function BookingSuccess({ values, onReset }: BookingSuccessProps) {
           <span className="tabular font-display text-2xl font-bold">{service ? formatPrice(service.price) : '$0'}</span>
         </div>
 
-        <p className="mt-5 flex items-start gap-2 rounded-md bg-accent-soft px-3 py-2.5 text-sm text-accent-soft-ink">
-          <MessageCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
-          Enviaremos la confirmación a {values.client_phone}.
-        </p>
-
-        <Button size="lg" className="mt-6 w-full" onClick={onReset}>
-          Agendar otra cita
-        </Button>
+        <div className="mt-6 flex flex-col gap-2">
+          <Link to="/mis-citas" className={buttonStyles({ size: 'lg', className: 'w-full' })}>
+            <CalendarDays aria-hidden className="size-4" />
+            Ver mis citas
+          </Link>
+          <Button variant="secondary" size="lg" className="w-full" onClick={onReset}>
+            Agendar otra cita
+          </Button>
+        </div>
       </m.div>
     </div>
   );
