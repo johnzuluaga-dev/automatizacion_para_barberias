@@ -1,12 +1,9 @@
 /**
- * Servicio para conectarse con n8n y enviar datos de citas
+ * Aviso opcional a n8n de cada reserva (mismo payload que la versión original).
+ * Solo se usa si VITE_N8N_ENABLED=true; la cita ya queda guardada en Supabase.
  */
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
-
-if (!N8N_WEBHOOK_URL) {
-  console.error('Error: VITE_N8N_WEBHOOK_URL no está definida en .env');
-}
 
 export interface BookingData {
   client_name: string;
@@ -18,7 +15,12 @@ export interface BookingData {
   price?: number;
 }
 
-export async function sendBookingToN8n(bookingData: BookingData): Promise<any> {
+/** Respuesta del webhook; n8n puede devolver cualquier JSON o un cuerpo vacío. */
+export type N8nResponse = Record<string, unknown>;
+
+export async function sendBookingToN8n(bookingData: BookingData): Promise<N8nResponse> {
+  if (!N8N_WEBHOOK_URL) throw new Error('n8n no está configurado');
+
   try {
     const payload = {
       tipo_evento: 'nueva_cita',
@@ -33,18 +35,13 @@ export async function sendBookingToN8n(bookingData: BookingData): Promise<any> {
       source: 'BarberFlow Web',
     };
 
-    console.log('Enviando a n8n:', payload);
-    console.log('URL:', N8N_WEBHOOK_URL);
-    
     const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    console.log('Response status:', response.status);
     const responseText = await response.text();
-    console.log('Response text:', responseText);
 
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -54,7 +51,7 @@ export async function sendBookingToN8n(bookingData: BookingData): Promise<any> {
       return { success: true, message: 'Cita enviada' };
     }
 
-    return JSON.parse(responseText);
+    return JSON.parse(responseText) as N8nResponse;
   } catch (error) {
     console.error('Error al enviar cita a n8n:', error);
     throw error;

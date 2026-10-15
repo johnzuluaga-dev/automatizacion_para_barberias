@@ -1,0 +1,441 @@
+<title>BarberFlow Style Tile</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Geist:wght@400..700&family=Instrument+Sans:wght@400..700&family=Instrument+Serif&display=swap">
+<style>
+/* Layout: cabecera sobria con selector tipográfico; tres columnas de muestra comparables fila por fila (título, botones, tarjeta, login, estados). */
+:root {
+  --page: #f3f2ef;
+  --page-ink: #1b1a17;
+  --page-muted: #66625a;
+  --page-line: #dcd9d2;
+  --page-chip: #ffffff;
+  --font-ui: "Geist", "Segoe UI", system-ui, sans-serif;
+  --display-bricolage: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body-geist: "Geist", "Segoe UI", system-ui, sans-serif;
+  --display-instrument: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --body-instrument: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --ok: #1e8e5a;
+  --warn: #c98a1b;
+  --err: #d6453d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #161614;
+    --page-ink: #ecebe6;
+    --page-muted: #a19e96;
+    --page-line: #2e2d29;
+    --page-chip: #201f1c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #161614;
+  --page-ink: #ecebe6;
+  --page-muted: #a19e96;
+  --page-line: #2e2d29;
+  --page-chip: #201f1c;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--page);
+  color: var(--page-ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1400px; margin: 0 auto; padding-block: 40px 56px; display: grid; gap: 28px; }
+
+/* Cabecera de la página */
+.intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 20px 40px; }
+.intro h1 { margin: 0; font-family: var(--display-bricolage); font-size: clamp(26px, 3vw, 34px); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+.intro p { margin: 6px 0 0; color: var(--page-muted); max-width: 62ch; }
+.pair { display: flex; flex-direction: column; gap: 8px; }
+.pair-label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--page-muted); }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 12px; padding: 3px; background: var(--page-chip); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 8px 14px; border-radius: 9px; cursor: pointer; font-size: 14px; color: var(--page-muted); transition: background-color 180ms ease, color 180ms ease; }
+.seg input:checked + label { background: var(--page-ink); color: var(--page); }
+.seg input:focus-visible + label { outline: 2px solid var(--page-ink); outline-offset: 2px; }
+
+/* Rejilla de opciones */
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Cada opción define sus propios tokens (son muestras fijas, no siguen el tema de la página). */
+.opt {
+  --display: var(--display-bricolage);
+  --body: var(--body-geist);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  border: 1px solid var(--frame);
+  border-radius: 14px;
+  padding: 24px;
+  display: grid;
+  gap: 24px;
+}
+body[data-pair="instrument"] .opt { --display: var(--display-instrument); --body: var(--body-instrument); }
+
+.opt-a { color-scheme: light; --bg: #f4f2ed; --surface: #ffffff; --ink: #111111; --muted: #6b675f; --line: #e2ded5; --primary: #1f4bff; --primary-ink: #ffffff; --primary-hover: #1a3fd9; --soft: #dce3ff; --soft-ink: #1636c4; --detail: #ff6a4d; --frame: #e2ded5; --focus: #1f4bff; }
+.opt-b { color-scheme: light; --bg: #f6f1e7; --surface: #fffcf6; --ink: #14201b; --muted: #59625c; --line: #e3dccb; --primary: #17403a; --primary-ink: #fffcf6; --primary-hover: #0f302b; --soft: #ffe3d2; --soft-ink: #7a3a14; --detail: #ff9f6b; --frame: #e3dccb; --focus: #17403a; }
+.opt-c { color-scheme: dark; --bg: #0f100e; --surface: #181a16; --ink: #f2f1ea; --muted: #8d8f85; --line: #262822; --primary: #c8f560; --primary-ink: #0f100e; --primary-hover: #d6f884; --soft: #20231c; --soft-ink: #f2f1ea; --detail: #c8f560; --frame: #262822; --focus: #c8f560; }
+
+.opt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.opt-letter { font-family: var(--display); font-size: 15px; font-weight: 600; }
+.opt-letter b { display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: 8px; border-radius: 8px; background: var(--ink); color: var(--bg); font-size: 14px; font-family: var(--font-ui); }
+.opt-meta { font-size: 12px; color: var(--muted); }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.sw { display: grid; gap: 4px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sw i { display: block; height: 28px; border-radius: 8px; border: 1px solid var(--line); }
+.sw span { color: var(--ink); font-size: 12px; }
+
+/* Barra 60/30/10 */
+.ratio { display: grid; gap: 6px; }
+.ratio-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+.ratio-bar i:nth-child(1) { flex: 60; background: var(--bg); }
+.ratio-bar i:nth-child(2) { flex: 30; background: var(--secondary-fill); }
+.ratio-bar i:nth-child(3) { flex: 10; background: var(--primary); }
+.opt-a { --secondary-fill: #ffffff; }
+.opt-b { --secondary-fill: #17403a; }
+.opt-c { --secondary-fill: #181a16; }
+.ratio-legend { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+
+.label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.block { display: grid; gap: 12px; }
+
+/* Título */
+.headline { margin: 0; font-family: var(--display); font-size: clamp(34px, 3.3vw, 46px); line-height: 0.98; letter-spacing: -0.035em; font-weight: 700; text-wrap: balance; font-variation-settings: "opsz" 96; }
+body[data-pair="instrument"] .headline { font-weight: 400; letter-spacing: -0.015em; line-height: 1; font-size: clamp(38px, 3.6vw, 52px); }
+.headline em { font-style: normal; color: var(--accent-text, var(--ink)); }
+body[data-pair="instrument"] .headline em { font-style: italic; }
+.opt-a { --accent-text: #1f4bff; }
+.opt-b { --accent-text: #17403a; }
+.opt-c { --accent-text: #f2f1ea; }
+.opt-c .headline em { text-decoration: underline; text-decoration-color: var(--detail); text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.lede { margin: 0; color: var(--muted); max-width: 40ch; }
+
+/* Botones */
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { font: inherit; font-size: 14px; font-weight: 600; height: 42px; padding: 0 16px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; transition: background-color 180ms ease, border-color 180ms ease, transform 150ms ease; }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.btn-primary { background: var(--primary); color: var(--primary-ink); }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.btn-secondary:hover { border-color: var(--muted); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-ghost:hover { color: var(--ink); background: var(--soft); }
+
+/* Tarjeta de cita */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 12px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.03); }
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-title { font-family: var(--display); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+body[data-pair="instrument"] .card-title { font-weight: 400; font-size: 23px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--soft-ink); }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); }
+.rows { display: grid; margin: 0; }
+.rows div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.rows dt { color: var(--muted); }
+.rows dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+.total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 4px; }
+.total strong { font-family: var(--display); font-size: 26px; font-variant-numeric: tabular-nums; }
+.detail-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--detail); display: inline-block; margin-right: 6px; }
+
+/* Login */
+.login { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+.login h3 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: -0.015em; }
+body[data-pair="instrument"] .login h3 { font-weight: 400; font-size: 26px; }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 13px; font-weight: 500; }
+.field input { font: inherit; font-size: 15px; height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); transition: border-color 150ms ease, box-shadow 150ms ease; }
+.field input::placeholder { color: var(--muted); }
+.field input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+.field-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.link { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
+.link:hover { text-decoration-color: currentColor; }
+.btn-block { width: 100%; }
+.or { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Código de 6 dígitos */
+.otp { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.otp span { height: 48px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-family: var(--display); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.otp span.on { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+.otp-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Estados */
+.states { display: flex; flex-wrap: wrap; gap: 6px; }
+.state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+
+.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.notes li::before { content: "·"; margin-right: 8px; color: var(--ink); }
+
+.foot { color: var(--page-muted); font-size: 13px; max-width: 70ch; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <div>
+      <h1>Elige la dirección visual de BarberFlow</h1>
+      <p>Las tres opciones usan los mismos componentes reales de la app: titular de reserva, botones, tarjeta de cita, inicio de sesión y código de verificación. Cambia la pareja tipográfica para verla en las tres a la vez.</p>
+    </div>
+    <div class="pair" role="radiogroup" aria-labelledby="pair-label">
+      <span class="pair-label" id="pair-label">Pareja tipográfica</span>
+      <div class="seg">
+        <input type="radio" name="pair" id="pair-bricolage" value="bricolage" checked>
+        <label for="pair-bricolage">Bricolage + Geist</label>
+        <input type="radio" name="pair" id="pair-instrument" value="instrument">
+        <label for="pair-instrument">Instrument Serif + Sans</label>
+      </div>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- Opción A -->
+    <section class="opt opt-a" aria-labelledby="a-name">
+      <div class="opt-head">
+        <span class="opt-letter" id="a-name"><b>A</b>Cobalto sobre hueso</span>
+        <span class="opt-meta">Modo claro</span>
+      </div>
+      <div class="swatches">
+        <div class="sw"><i style="background:#F4F2ED"></i><span>Fondo</span>#F4F2ED</div>
+        <div class="sw"><i style="background:#111111"></i><span>Tinta</span>#111111</div>
+        <div class="sw"><i style="background:#1F4BFF"></i><span>Cobalto</span>#1F4BFF</div>
+        <div class="sw"><i style="background:#DCE3FF"></i><span>Suave</span>#DCE3FF</div>
+        <div class="sw"><i style="background:#FF6A4D"></i><span>Coral</span>#FF6A4D</div>
+      </div>
+      <div class="ratio">
+        <div class="ratio-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="ratio-legend"><span>60 hueso</span><span>30 blanco</span><span>10 cobalto</span></div>
+      </div>
+
+      <div class="block">
+        <span class="label">Título</span>
+        <h2 class="headline">Tu próximo corte, <em>en un minuto.</em></h2>
+        <p class="lede">Elige servicio, barbero y hora. Te avisamos antes de tu cita.</p>
+      </div>
+
+      <div class="block">
+        <span class="label">Botones</span>
+        <div class="btns">
+          <button class="btn btn-primary" type="button">Agendar cita</button>
+          <button class="btn btn-secondary" type="button">Ver mis citas</button>
+          <button class="btn btn-ghost" type="button">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="block">
+        <span class="label">Tarjeta</span>
+        <article class="card">
+          <div class="card-top"><span class="card-title">Corte + Barba</span><span class="badge">Confirmada</span></div>
+          <dl class="rows">
+            <div><dt>Barbero</dt><dd>Andrés Estilo</dd></div>
+            <div><dt>Día</dt><dd>Jueves 15 de octubre</dd></div>
+            <div><dt>Hora</dt><dd>16:30</dd></div>
+          </dl>
+          <div class="total"><span class="opt-meta"><span class="detail-dot"></span>Recordatorio activo</span><strong>$25</strong></div>
+        </article>
+      </div>
+
+      <div class="block">
+        <span class="label">Inicio de sesión</span>
+        <form class="login" onsubmit="return false">
+          <h3>Ingresa a tu cuenta</h3>
+          <div class="field"><label for="a-email">Correo</label><input id="a-email" type="email" placeholder="tu@correo.com" autocomplete="off"></div>
+          <div class="field"><label for="a-pass">Contraseña</label><input id="a-pass" type="password" placeholder="Mínimo 10 caracteres" autocomplete="off"></div>
+          <div class="field-row"><span></span><a class="link" href="#a-pass">Olvidé mi contraseña</a></div>
+          <button class="btn btn-primary btn-block" type="submit">Ingresar</button>
+          <div class="or">o</div>
+          <button class="btn btn-secondary btn-block" type="button">Entrar con código</button>
+        </form>
+      </div>
+
+      <div class="block">
+        <span class="label">Código de verificación</span>
+        <div class="otp" aria-hidden="true"><span>4</span><span>8</span><span>1</span><span class="on"></span><span></span><span></span></div>
+        <div class="otp-meta"><span>Enviado a j***@gmail.com</span><span>Reenviar en 0:42</span></div>
+      </div>
+
+      <div class="block">
+        <span class="label">Estados</span>
+        <div class="states"><span class="state" style="--c:#1E8E5A">Confirmada</span><span class="state" style="--c:#C98A1B">Pendiente</span><span class="state" style="--c:#D6453D">Cancelada</span></div>
+      </div>
+
+      <ul class="notes">
+        <li>Coral solo en puntos y detalles mínimos.</li>
+        <li>La más neutra y versátil; el cobalto se lee como "acción".</li>
+      </ul>
+    </section>
+
+    <!-- Opción B -->
+    <section class="opt opt-b" aria-labelledby="b-name">
+      <div class="opt-head">
+        <span class="opt-letter" id="b-name"><b>B</b>Bosque, crema y durazno</span>
+        <span class="opt-meta">Modo claro</span>
+      </div>
+      <div class="swatches">
+        <div class="sw"><i style="background:#F6F1E7"></i><span>Crema</span>#F6F1E7</div>
+        <div class="sw"><i style="background:#14201B"></i><span>Tinta</span>#14201B</div>
+        <div class="sw"><i style="background:#17403A"></i><span>Bosque</span>#17403A</div>
+        <div class="sw"><i style="background:#FF9F6B"></i><span>Durazno</span>#FF9F6B</div>
+        <div class="sw"><i style="background:#E3DCCB"></i><span>Líneas</span>#E3DCCB</div>
+      </div>
+      <div class="ratio">
+        <div class="ratio-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="ratio-legend"><span>60 crema</span><span>30 bosque</span><span>10 durazno</span></div>
+      </div>
+
+      <div class="block">
+        <span class="label">Título</span>
+        <h2 class="headline">Tu próximo corte, <em>en un minuto.</em></h2>
+        <p class="lede">Elige servicio, barbero y hora. Te avisamos antes de tu cita.</p>
+      </div>
+
+      <div class="block">
+        <span class="label">Botones</span>
+        <div class="btns">
+          <button class="btn btn-primary" type="button">Agendar cita</button>
+          <button class="btn btn-secondary" type="button">Ver mis citas</button>
+          <button class="btn btn-ghost" type="button">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="block">
+        <span class="label">Tarjeta</span>
+        <article class="card">
+          <div class="card-top"><span class="card-title">Corte + Barba</span><span class="badge">Confirmada</span></div>
+          <dl class="rows">
+            <div><dt>Barbero</dt><dd>Andrés Estilo</dd></div>
+            <div><dt>Día</dt><dd>Jueves 15 de octubre</dd></div>
+            <div><dt>Hora</dt><dd>16:30</dd></div>
+          </dl>
+          <div class="total"><span class="opt-meta"><span class="detail-dot"></span>Recordatorio activo</span><strong>$25</strong></div>
+        </article>
+      </div>
+
+      <div class="block">
+        <span class="label">Inicio de sesión</span>
+        <form class="login" onsubmit="return false">
+          <h3>Ingresa a tu cuenta</h3>
+          <div class="field"><label for="b-email">Correo</label><input id="b-email" type="email" placeholder="tu@correo.com" autocomplete="off"></div>
+          <div class="field"><label for="b-pass">Contraseña</label><input id="b-pass" type="password" placeholder="Mínimo 10 caracteres" autocomplete="off"></div>
+          <div class="field-row"><span></span><a class="link" href="#b-pass">Olvidé mi contraseña</a></div>
+          <button class="btn btn-primary btn-block" type="submit">Ingresar</button>
+          <div class="or">o</div>
+          <button class="btn btn-secondary btn-block" type="button">Entrar con código</button>
+        </form>
+      </div>
+
+      <div class="block">
+        <span class="label">Código de verificación</span>
+        <div class="otp" aria-hidden="true"><span>4</span><span>8</span><span>1</span><span class="on"></span><span></span><span></span></div>
+        <div class="otp-meta"><span>Enviado a j***@gmail.com</span><span>Reenviar en 0:42</span></div>
+      </div>
+
+      <div class="block">
+        <span class="label">Estados</span>
+        <div class="states"><span class="state" style="--c:#1E8E5A">Confirmada</span><span class="state" style="--c:#C98A1B">Pendiente</span><span class="state" style="--c:#D6453D">Cancelada</span></div>
+      </div>
+
+      <ul class="notes">
+        <li>Durazno nunca como texto: no alcanza contraste sobre crema.</li>
+        <li>La más cálida; se siente a barbería de barrio cuidada.</li>
+      </ul>
+    </section>
+
+    <!-- Opción C -->
+    <section class="opt opt-c" aria-labelledby="c-name">
+      <div class="opt-head">
+        <span class="opt-letter" id="c-name"><b>C</b>Grafito con lima</span>
+        <span class="opt-meta">Modo oscuro</span>
+      </div>
+      <div class="swatches">
+        <div class="sw"><i style="background:#0F100E"></i><span>Fondo</span>#0F100E</div>
+        <div class="sw"><i style="background:#181A16"></i><span>Superficie</span>#181A16</div>
+        <div class="sw"><i style="background:#F2F1EA"></i><span>Texto</span>#F2F1EA</div>
+        <div class="sw"><i style="background:#8D8F85"></i><span>Secundario</span>#8D8F85</div>
+        <div class="sw"><i style="background:#C8F560"></i><span>Lima</span>#C8F560</div>
+      </div>
+      <div class="ratio">
+        <div class="ratio-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="ratio-legend"><span>60 grafito</span><span>30 superficie</span><span>10 lima</span></div>
+      </div>
+
+      <div class="block">
+        <span class="label">Título</span>
+        <h2 class="headline">Tu próximo corte, <em>en un minuto.</em></h2>
+        <p class="lede">Elige servicio, barbero y hora. Te avisamos antes de tu cita.</p>
+      </div>
+
+      <div class="block">
+        <span class="label">Botones</span>
+        <div class="btns">
+          <button class="btn btn-primary" type="button">Agendar cita</button>
+          <button class="btn btn-secondary" type="button">Ver mis citas</button>
+          <button class="btn btn-ghost" type="button">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="block">
+        <span class="label">Tarjeta</span>
+        <article class="card">
+          <div class="card-top"><span class="card-title">Corte + Barba</span><span class="badge">Confirmada</span></div>
+          <dl class="rows">
+            <div><dt>Barbero</dt><dd>Andrés Estilo</dd></div>
+            <div><dt>Día</dt><dd>Jueves 15 de octubre</dd></div>
+            <div><dt>Hora</dt><dd>16:30</dd></div>
+          </dl>
+          <div class="total"><span class="opt-meta"><span class="detail-dot"></span>Recordatorio activo</span><strong>$25</strong></div>
+        </article>
+      </div>
+
+      <div class="block">
+        <span class="label">Inicio de sesión</span>
+        <form class="login" onsubmit="return false">
+          <h3>Ingresa a tu cuenta</h3>
+          <div class="field"><label for="c-email">Correo</label><input id="c-email" type="email" placeholder="tu@correo.com" autocomplete="off"></div>
+          <div class="field"><label for="c-pass">Contraseña</label><input id="c-pass" type="password" placeholder="Mínimo 10 caracteres" autocomplete="off"></div>
+          <div class="field-row"><span></span><a class="link" href="#c-pass">Olvidé mi contraseña</a></div>
+          <button class="btn btn-primary btn-block" type="submit">Ingresar</button>
+          <div class="or">o</div>
+          <button class="btn btn-secondary btn-block" type="button">Entrar con código</button>
+        </form>
+      </div>
+
+      <div class="block">
+        <span class="label">Código de verificación</span>
+        <div class="otp" aria-hidden="true"><span>4</span><span>8</span><span>1</span><span class="on"></span><span></span><span></span></div>
+        <div class="otp-meta"><span>Enviado a j***@gmail.com</span><span>Reenviar en 0:42</span></div>
+      </div>
+
+      <div class="block">
+        <span class="label">Estados</span>
+        <div class="states"><span class="state" style="--c:#1E8E5A">Confirmada</span><span class="state" style="--c:#C98A1B">Pendiente</span><span class="state" style="--c:#D6453D">Cancelada</span></div>
+      </div>
+
+      <ul class="notes">
+        <li>Lima solo en el botón principal, el foco y un subrayado.</li>
+        <li>La más audaz; pide fotos o contenido con mucho contraste.</li>
+      </ul>
+    </section>
+  </main>
+
+  <p class="foot">Todas usan bordes de 1 px, radios de 10 a 14 px y sombras casi imperceptibles. Los colores de estado (éxito, aviso, error) se muestran como punto con texto en tinta, para que el amarillo de aviso no pierda contraste sobre fondos claros. Pasa el cursor por los botones y enfoca los campos para ver las microinteracciones.</p>
+</div>
+
+<script>
+  document.querySelectorAll('input[name="pair"]').forEach(function (r) {
+    r.addEventListener('change', function () { document.body.dataset.pair = r.value; });
+  });
+</script>

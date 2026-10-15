@@ -1,55 +1,144 @@
-// test/BookingForm.test.tsx
-jest.mock('../src/lib/n8n', () => ({
-  sendBookingToN8n: jest.fn().mockResolvedValue({ success: true }),
-}));
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { sendBookingToN8n } from '../src/lib/n8n';
+import { createAppointment, DataError, getTakenSlots } from '../src/lib/supabase';
+import type * as SupabaseModule from '../src/lib/supabase';
+import * as api from './mocks/auth-api';
+import { renderAt } from './mocks/render';
 
-import { render, screen, fireEvent, act } from "@testing-library/react";
-import BookingForm from "../src/BookingForm";
+vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
+vi.mock('../src/lib/n8n', () => ({ sendBookingToN8n: vi.fn() }));
+vi.mock('../src/lib/supabase', async () => {
+  const actual = await vi.importActual<typeof SupabaseModule>('../src/lib/supabase');
+  return {
+    DataError: actual.DataError,
+    createAppointment: vi.fn(),
+    getTakenSlots: vi.fn(),
+    getMyAppointments: vi.fn().mockResolvedValue([]),
+    getAppointments: vi.fn().mockResolvedValue([]),
+  };
+});
 
-describe("BookingForm", () => {
+// Miércoles 14 de octubre de 2026, 9:00 a. m. (antes de abrir).
+const NOW = new Date(2026, 9, 14, 9, 0);
 
-  test("renderiza el formulario correctamente", () => {
-    render(<BookingForm />);
-    expect(screen.getByText(/barberflow/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/nombre completo/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/teléfono/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /agendar cita/i })).toBeInTheDocument();
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+  api.resetAuthMock();
+  vi.mocked(createAppointment).mockReset().mockImplementation(async (input) => ({
+    ...input,
+    id: 'nueva',
+    status: 'pending',
+    created_at: '',
+  }));
+  vi.mocked(getTakenSlots).mockReset().mockResolvedValue([]);
+  vi.mocked(sendBookingToN8n).mockReset();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+async function chooseSelection(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole('radio', { name: /corte \+ barba/i }));
+  await user.click(screen.getByRole('radio', { name: 'Andrés Estilo' }));
+  await user.click(screen.getByRole('radio', { name: /jueves 15 de octubre/i }));
+  await user.click(await screen.findByRole('radio', { name: '16:30' }));
+}
+
+describe('reserva sin sesión', () => {
+  test('pide ingresar y conserva la selección al volver', async () => {
+    api.signInWithPassword.mockImplementationOnce(async () => {
+      api.setTestSession({ name: 'Laura Gómez' });
+    });
+    const user = userEvent.setup();
+    renderAt('/');
+    await chooseSelection(user);
+    expect(screen.queryByLabelText(/^nombre completo/i)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ingresa para agendar' }));
+
+    expect(await screen.findByRole('heading', { name: 'Ingresa a tu cuenta' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^correo/i), 'laura@correo.com');
+    await user.type(screen.getByLabelText(/^contraseña/i), 'Tijeras-Azules-2026');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: /tu próximo corte/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /corte \+ barba/i })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '16:30' })).toBeChecked();
+    expect(screen.getByLabelText(/^nombre completo/i)).toHaveValue('Laura Gómez');
+    expect(createAppointment).not.toHaveBeenCalled();
   });
 
-  test("permite escribir en los inputs", () => {
-    render(<BookingForm />);
-    const nombre = screen.getByPlaceholderText(/nombre completo/i);
-    const telefono = screen.getByPlaceholderText(/teléfono/i);
-    fireEvent.change(nombre, { target: { value: "Juan Pérez" } });
-    fireEvent.change(telefono, { target: { value: "123456789" } });
-    expect(nombre).toHaveValue("Juan Pérez");
-    expect(telefono).toHaveValue("123456789");
+  test('bloquea los domingos y ofrece 18 turnos de 11:00 a 19:30', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    expect(await screen.findByRole('radio', { name: /domingo 18 de octubre, cerrado/i })).toBeDisabled();
+    const group = screen.getByRole('group', { name: /hora/i });
+    const slots = within(group).getAllByRole('radio');
+    expect(slots).toHaveLength(18);
+    expect(slots[0]).toHaveAccessibleName('11:00');
+    expect(slots.at(-1)).toHaveAccessibleName('19:30');
+    expect(slots[0]).toBeDisabled();
+    await user.click(screen.getByRole('radio', { name: /jueves 15 de octubre/i }));
+    expect(slots[0]).toBeEnabled();
+  });
+});
+
+describe('reserva con sesión', () => {
+  beforeEach(() => api.setTestSession({ id: 'user-9', name: 'Laura Gómez' }));
+
+  test('muestra errores y no envía si faltan datos', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    await user.click(await screen.findByRole('button', { name: 'Agendar Cita' }));
+    expect(screen.getByText('Elige un servicio.')).toBeInTheDocument();
+    expect(screen.getByText(/faltan 4 datos/i)).toBeInTheDocument();
+    expect(createAppointment).not.toHaveBeenCalled();
   });
 
-  test("envía el formulario y muestra confirmación", async () => {
-    render(<BookingForm />);
+  test('crea la cita pendiente en Supabase con los datos del perfil', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    await chooseSelection(user);
+    expect(screen.getByLabelText(/^celular/i)).toHaveValue('3001234567');
+    await user.click(screen.getByRole('button', { name: 'Agendar Cita' }));
 
-    fireEvent.change(screen.getByPlaceholderText(/nombre completo/i), {
-      target: { value: "Juan Pérez" },
-    });
-    fireEvent.change(screen.getByPlaceholderText(/teléfono/i), {
-      target: { value: "123456789" },
-    });
-
-    const selects = screen.getAllByRole("combobox");
-    fireEvent.change(selects[0], { target: { value: "Corte Clásico" } });
-    fireEvent.change(selects[1], { target: { value: "Carlos The Blade" } });
-
-    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
-    const timeInput = document.querySelector('input[type="time"]') as HTMLInputElement;
-    fireEvent.change(dateInput, { target: { value: "2026-05-20" } });
-    fireEvent.change(timeInput, { target: { value: "10:00" } });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /agendar cita/i }));
-    });
-
-    expect(screen.getByText(/cita confirmada/i)).toBeInTheDocument();
+    expect(createAppointment).toHaveBeenCalledWith(
+      {
+        client_name: 'Laura Gómez',
+        client_phone: '3001234567',
+        service: 'Corte + Barba',
+        barber: 'Andrés Estilo',
+        appointment_date: '2026-10-15',
+        appointment_time: '16:30',
+      },
+      'user-9',
+    );
+    expect(await screen.findByRole('heading', { name: '¡Cita agendada!' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver mis citas/i })).toHaveAttribute('href', '/mis-citas');
+    // n8n está desactivado por defecto.
+    expect(sendBookingToN8n).not.toHaveBeenCalled();
   });
 
+  test('las horas ocupadas aparecen deshabilitadas', async () => {
+    vi.mocked(getTakenSlots).mockResolvedValue(['16:30']);
+    const user = userEvent.setup();
+    renderAt('/');
+    await user.click(await screen.findByRole('radio', { name: 'Andrés Estilo' }));
+    await user.click(screen.getByRole('radio', { name: /jueves 15 de octubre/i }));
+    expect(await screen.findByRole('radio', { name: '16:30, ocupada' })).toBeDisabled();
+    expect(getTakenSlots).toHaveBeenCalledWith('Andrés Estilo', '2026-10-15');
+  });
+
+  test('si otra persona toma la hora al mismo tiempo, lo explica', async () => {
+    vi.mocked(createAppointment).mockRejectedValueOnce(new DataError('Esa hora acaba de ocuparse. Elige otra.', '23505'));
+    const user = userEvent.setup();
+    renderAt('/');
+    await chooseSelection(user);
+    await user.click(screen.getByRole('button', { name: 'Agendar Cita' }));
+    expect(await screen.findByText('Esa hora acaba de ocuparse. Elige otra.')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: '16:30' })).not.toBeChecked();
+  });
 });

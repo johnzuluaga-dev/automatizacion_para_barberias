@@ -1,0 +1,167 @@
+@import 'tailwindcss';
+@import './tokens/tokens.css';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Expone los tokens como utilidades de Tailwind (bg-surface, text-muted, rounded-lg…). */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-ink: var(--accent-soft-ink);
+  --color-detail: var(--detail);
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-text: var(--danger-text);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-text: var(--info-text);
+  --color-info-soft: var(--info-soft);
+
+  --radius-sm: var(--round-sm);
+  --radius-md: var(--round-md);
+  --radius-lg: var(--round-lg);
+  --radius-xl: var(--round-xl);
+
+  --shadow-sm: var(--elev-sm);
+  --shadow-md: var(--elev-md);
+  --shadow-lg: var(--elev-lg);
+
+  --ease-out: var(--ease-smooth);
+}
+
+@theme {
+  --font-display: 'Bricolage Grotesque Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Geist Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  /* Escala tipográfica (ratio ~1.25) con titular fluido. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.35rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.7rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.8rem;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.1rem;
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 2.5rem;
+  --text-display: clamp(2.75rem, 1.4rem + 5.2vw, 4.75rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.035em;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-balance;
+    letter-spacing: -0.02em;
+    font-variation-settings: 'opsz' 96;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Modal nativo: entrada suave y fondo atenuado. */
+@layer components {
+  /* Franja de poste de barbería: único guiño decorativo de la marca. */
+  .bf-pole {
+    background: repeating-linear-gradient(
+      -55deg,
+      var(--accent) 0 6px,
+      var(--surface) 6px 9px,
+      var(--detail) 9px 15px,
+      var(--surface) 15px 18px
+    );
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  /* En móvil la barra de reserva es fija: deja espacio al hacer scroll a un campo. */
+  @media (width < 64rem) {
+    html:has(.bf-mobile-bar) {
+      scroll-padding-bottom: 9rem;
+    }
+
+    body:has(.bf-mobile-bar) {
+      padding-bottom: 5.5rem;
+    }
+  }
+
+  .bf-dialog {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    transition:
+      opacity var(--duration-base) var(--ease-smooth),
+      transform var(--duration-base) var(--ease-smooth),
+      overlay var(--duration-base) allow-discrete,
+      display var(--duration-base) allow-discrete;
+  }
+
+  .bf-dialog[open] {
+    opacity: 1;
+    transform: none;
+  }
+
+  @starting-style {
+    .bf-dialog[open] {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+  }
+
+  .bf-dialog::backdrop {
+    background: rgb(20 19 17 / 0.45);
+  }
+}
