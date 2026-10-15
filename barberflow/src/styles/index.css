@@ -110,6 +110,35 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Modal nativo: entrada suave y fondo atenuado. */
+@layer components {
+  .bf-dialog {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+    transition:
+      opacity var(--duration-base) var(--ease-smooth),
+      transform var(--duration-base) var(--ease-smooth),
+      overlay var(--duration-base) allow-discrete,
+      display var(--duration-base) allow-discrete;
+  }
+
+  .bf-dialog[open] {
+    opacity: 1;
+    transform: none;
+  }
+
+  @starting-style {
+    .bf-dialog[open] {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+  }
+
+  .bf-dialog::backdrop {
+    background: rgb(20 19 17 / 0.45);
+  }
+}
+
 /* -------------------------------------------------------------------------
  * LEGADO — paleta anterior, se elimina al migrar las pantallas (fase 4).
  * ------------------------------------------------------------------------- */
