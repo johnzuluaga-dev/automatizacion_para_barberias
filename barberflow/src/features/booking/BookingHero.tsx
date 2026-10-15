@@ -22,7 +22,7 @@ export function BookingHero() {
       <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm">
         {facts.map(({ Icon, text }) => (
           <li key={text} className="inline-flex items-center gap-2 text-ink/80">
-            <Icon aria-hidden className="size-4 text-accent-2" />
+            <Icon aria-hidden className="size-4 text-detail" />
             {text}
           </li>
         ))}

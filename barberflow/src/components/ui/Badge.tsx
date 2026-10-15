@@ -6,10 +6,10 @@ export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' 
 const tones: Record<BadgeTone, string> = {
   neutral: 'bg-surface-2 text-muted',
   accent: 'bg-accent-soft text-accent',
-  success: 'bg-success-soft text-success',
-  warning: 'bg-warning-soft text-warning',
-  danger: 'bg-danger-soft text-danger',
-  info: 'bg-info-soft text-info',
+  success: 'bg-success-soft text-success-text',
+  warning: 'bg-warning-soft text-warning-text',
+  danger: 'bg-danger-soft text-danger-text',
+  info: 'bg-info-soft text-info-text',
 };
 
 interface BadgeProps {

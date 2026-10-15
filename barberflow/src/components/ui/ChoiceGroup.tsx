@@ -83,7 +83,7 @@ export function ChoiceGroup<T extends ChoiceOption>({
         })}
       </div>
       {error && (
-        <p id={errorId} className="mt-2 text-xs font-medium text-danger">
+        <p id={errorId} className="mt-2 text-xs font-medium text-danger-text">
           {error}
         </p>
       )}

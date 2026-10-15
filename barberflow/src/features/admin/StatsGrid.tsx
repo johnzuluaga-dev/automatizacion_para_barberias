@@ -34,8 +34,8 @@ export function StatsGrid({ stats, loading, unavailable = false }: StatsGridProp
       </div>
       <dl className="grid grid-cols-3 divide-x divide-line rounded-lg border border-line bg-surface">
         {secondary.map(({ label, value }, i) => (
-          <div key={label} className={cn('flex flex-col justify-between gap-6 p-4 sm:p-5', i === 2 && 'text-danger')}>
-            <dt className={cn('text-xs sm:text-sm', i === 2 ? 'text-danger' : 'text-muted')}>{label}</dt>
+          <div key={label} className={cn('flex flex-col justify-between gap-6 p-4 sm:p-5', i === 2 && 'text-danger-text')}>
+            <dt className={cn('text-xs sm:text-sm', i === 2 ? 'text-danger-text' : 'text-muted')}>{label}</dt>
             <dd className="tabular font-display text-3xl font-semibold">
               {loading ? <Skeleton className="h-9 w-10" /> : show(value)}
             </dd>

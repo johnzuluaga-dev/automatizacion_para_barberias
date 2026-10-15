@@ -55,7 +55,7 @@ export function TextField({ id: idProp, label, hint, error, icon, trailing, clas
         </p>
       )}
       {error && (
-        <p id={errorId} className="text-xs font-medium text-danger">
+        <p id={errorId} className="text-xs font-medium text-danger-text">
           {error}
         </p>
       )}

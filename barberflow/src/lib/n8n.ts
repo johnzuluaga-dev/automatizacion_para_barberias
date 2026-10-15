@@ -1,12 +1,9 @@
 /**
- * Servicio para conectarse con n8n y enviar datos de citas
+ * Aviso opcional a n8n de cada reserva (mismo payload que la versión original).
+ * Solo se usa si VITE_N8N_ENABLED=true; la cita ya queda guardada en Supabase.
  */
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
-
-if (!N8N_WEBHOOK_URL) {
-  console.error('Error: VITE_N8N_WEBHOOK_URL no está definida en .env');
-}
 
 export interface BookingData {
   client_name: string;
@@ -22,6 +19,8 @@ export interface BookingData {
 export type N8nResponse = Record<string, unknown>;
 
 export async function sendBookingToN8n(bookingData: BookingData): Promise<N8nResponse> {
+  if (!N8N_WEBHOOK_URL) throw new Error('n8n no está configurado');
+
   try {
     const payload = {
       tipo_evento: 'nueva_cita',

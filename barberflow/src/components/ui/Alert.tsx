@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils';
 type AlertTone = 'danger' | 'success' | 'info';
 
 const tones: Record<AlertTone, { box: string; Icon: typeof Info }> = {
-  danger: { box: 'border-danger/25 bg-danger-soft text-danger', Icon: CircleAlert },
-  success: { box: 'border-success/25 bg-success-soft text-success', Icon: CircleCheck },
-  info: { box: 'border-info/25 bg-info-soft text-info', Icon: Info },
+  danger: { box: 'border-danger/25 bg-danger-soft text-danger-text', Icon: CircleAlert },
+  success: { box: 'border-success/25 bg-success-soft text-success-text', Icon: CircleCheck },
+  info: { box: 'border-info/25 bg-info-soft text-info-text', Icon: Info },
 };
 
 interface AlertProps {

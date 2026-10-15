@@ -29,7 +29,7 @@ export function BarberPicker({ value, onChange, error }: BarberPickerProps) {
             aria-hidden
             className={cn(
               'grid size-11 shrink-0 place-items-center rounded-full font-display text-base font-bold transition-colors duration-150',
-              checked ? 'bg-accent text-accent-ink' : 'bg-accent-2-soft text-accent-2',
+              checked ? 'bg-accent text-accent-ink' : 'bg-surface-2 text-ink',
             )}
           >
             {initials(option.value)}

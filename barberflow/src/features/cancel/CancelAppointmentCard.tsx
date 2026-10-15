@@ -23,8 +23,8 @@ function IconBadge({ tone, children }: { tone: 'danger' | 'success'; children: R
       aria-hidden
       className={
         tone === 'danger'
-          ? 'grid size-12 place-items-center rounded-full bg-danger-soft text-danger [&_svg]:size-6'
-          : 'grid size-12 place-items-center rounded-full bg-success-soft text-success [&_svg]:size-6'
+          ? 'grid size-12 place-items-center rounded-full bg-danger-soft text-danger-text [&_svg]:size-6'
+          : 'grid size-12 place-items-center rounded-full bg-success-soft text-success-text [&_svg]:size-6'
       }
     >
       {children}

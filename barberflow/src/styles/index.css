@@ -16,15 +16,19 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
-  --color-accent-2: var(--accent-2);
-  --color-accent-2-soft: var(--accent-2-soft);
+  --color-accent-soft-ink: var(--accent-soft-ink);
+  --color-detail: var(--detail);
   --color-success: var(--success);
+  --color-success-text: var(--success-text);
   --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
   --color-warning-soft: var(--warning-soft);
   --color-danger: var(--danger);
+  --color-danger-text: var(--danger-text);
   --color-danger-soft: var(--danger-soft);
   --color-info: var(--info);
+  --color-info-text: var(--info-text);
   --color-info-soft: var(--info-soft);
 
   --radius-sm: var(--round-sm);
@@ -118,7 +122,7 @@
       -55deg,
       var(--accent) 0 6px,
       var(--surface) 6px 9px,
-      var(--accent-2) 9px 15px,
+      var(--detail) 9px 15px,
       var(--surface) 15px 18px
     );
     box-shadow: inset 0 0 0 1px var(--line);

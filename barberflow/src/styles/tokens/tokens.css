@@ -1,52 +1,58 @@
 /*
- * Design tokens de BarberFlow.
- * Paleta "Silla de barbero": neutros cálidos de papel, un acento bermellón
- * y un verde cuero secundario. Todo par texto/fondo cumple WCAG AA.
+ * Design tokens de BarberFlow — paleta A "Cobalto sobre hueso".
+ * 60 % neutros hueso/blanco · 30 % tinta y líneas · <10 % cobalto.
+ * El coral (#FF6A4D) es solo para detalles pequeños, nunca para texto.
+ * Los colores de estado de marca (#1E8E5A, #C98A1B, #D6453D) se usan en puntos,
+ * bordes e íconos; para texto se usa su variante "-text", que cumple AA.
  */
 
 :root {
   color-scheme: light;
 
   /* Superficies */
-  --bg: #f5f2ec;
+  --bg: #f4f2ed;
   --surface: #ffffff;
-  --surface-2: #efebe3;
-  --line: #e4ded3;
-  --line-strong: #cfc7b9;
+  --surface-2: #ebe8e1;
+  --line: #e2ded5;
+  --line-strong: #cdc8bd;
 
   /* Texto */
-  --ink: #1a1814;
-  --muted: #6b6458;
+  --ink: #111111;
+  --muted: #6b675f;
 
-  /* Acento principal: bermellón */
-  --accent: #c2401c;
-  --accent-hover: #a83615;
+  /* Acento: cobalto */
+  --accent: #1f4bff;
+  --accent-hover: #1a3fd9;
   --accent-ink: #ffffff;
-  --accent-soft: #fcefe9;
+  --accent-soft: #dce3ff;
+  --accent-soft-ink: #1636c4;
 
-  /* Acento secundario: verde cuero */
-  --accent-2: #1f5c52;
-  --accent-2-soft: #dcebe7;
+  /* Detalle: coral (solo puntos, subrayados y marcas pequeñas) */
+  --detail: #ff6a4d;
 
   /* Estados */
-  --success: #1e7046;
-  --success-soft: #dff0e6;
-  --warning: #8f5207;
-  --warning-soft: #f8ead2;
-  --danger: #b42318;
-  --danger-soft: #fbe3e0;
-  --info: #1f5c52;
-  --info-soft: #dcebe7;
+  --success: #1e8e5a;
+  --success-text: #17714a;
+  --success-soft: #e1f2e9;
+  --warning: #c98a1b;
+  --warning-text: #8a5d0f;
+  --warning-soft: #f8edd8;
+  --danger: #d6453d;
+  --danger-text: #b3342d;
+  --danger-soft: #fbe5e3;
+  --info: #1f4bff;
+  --info-text: #1636c4;
+  --info-soft: #dce3ff;
 
-  /* Forma */
-  --round-sm: 8px;
+  /* Forma: radios de 10 a 14 px, sombras casi imperceptibles */
+  --round-sm: 10px;
   --round-md: 12px;
-  --round-lg: 16px;
-  --round-xl: 22px;
+  --round-lg: 14px;
+  --round-xl: 14px;
 
-  --elev-sm: 0 1px 2px rgb(26 24 20 / 0.05);
-  --elev-md: 0 1px 2px rgb(26 24 20 / 0.04), 0 8px 24px -12px rgb(26 24 20 / 0.12);
-  --elev-lg: 0 2px 4px rgb(26 24 20 / 0.04), 0 24px 48px -24px rgb(26 24 20 / 0.22);
+  --elev-sm: 0 1px 2px rgb(17 17 17 / 0.04);
+  --elev-md: 0 1px 2px rgb(17 17 17 / 0.04), 0 4px 12px -6px rgb(17 17 17 / 0.08);
+  --elev-lg: 0 2px 4px rgb(17 17 17 / 0.05), 0 12px 32px -16px rgb(17 17 17 / 0.16);
 
   /* Movimiento */
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
@@ -58,33 +64,37 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #141311;
-  --surface: #1d1b18;
-  --surface-2: #26231f;
-  --line: #2c2925;
-  --line-strong: #3d3933;
+  --bg: #131412;
+  --surface: #1b1c1a;
+  --surface-2: #242522;
+  --line: #2c2d2a;
+  --line-strong: #3c3d39;
 
-  --ink: #ede8df;
-  --muted: #a39c90;
+  --ink: #f2f0ea;
+  --muted: #a29e95;
 
-  --accent: #f26b43;
-  --accent-hover: #f5835f;
-  --accent-ink: #141311;
-  --accent-soft: #3a2119;
+  --accent: #7a95ff;
+  --accent-hover: #93a9ff;
+  --accent-ink: #0d1330;
+  --accent-soft: #1d2647;
+  --accent-soft-ink: #b9c7ff;
 
-  --accent-2: #6fb5a6;
-  --accent-2-soft: #1b2e2a;
+  --detail: #ff7f66;
 
-  --success: #5cc98b;
-  --success-soft: #17291f;
-  --warning: #f0b450;
-  --warning-soft: #2e2414;
-  --danger: #f58a7d;
-  --danger-soft: #331b18;
-  --info: #6fb5a6;
-  --info-soft: #1b2e2a;
+  --success: #3fb47e;
+  --success-text: #5cc993;
+  --success-soft: #16281f;
+  --warning: #e0a23a;
+  --warning-text: #edb95c;
+  --warning-soft: #2c2312;
+  --danger: #e8645c;
+  --danger-text: #f2857e;
+  --danger-soft: #331b19;
+  --info: #7a95ff;
+  --info-text: #b9c7ff;
+  --info-soft: #1d2647;
 
   --elev-sm: 0 1px 2px rgb(0 0 0 / 0.3);
-  --elev-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.5);
-  --elev-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 24px 48px -24px rgb(0 0 0 / 0.6);
+  --elev-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 12px -6px rgb(0 0 0 / 0.4);
+  --elev-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.55);
 }

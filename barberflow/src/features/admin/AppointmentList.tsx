@@ -202,7 +202,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-danger hover:bg-danger-soft hover:text-danger"
+                                className="text-danger-text hover:bg-danger-soft hover:text-danger-text"
                                 icon={<X aria-hidden className="size-4" />}
                                 onClick={() => setToCancel(apt)}
                               >

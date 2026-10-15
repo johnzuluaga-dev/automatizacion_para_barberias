@@ -32,7 +32,7 @@ export function BookingSuccess({ values, onReset }: BookingSuccessProps) {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1, type: 'spring', stiffness: 380, damping: 22 }}
           aria-hidden
-          className="grid size-12 place-items-center rounded-full bg-success-soft text-success"
+          className="grid size-12 place-items-center rounded-full bg-success-soft text-success-text"
         >
           <Check className="size-6" strokeWidth={2.5} />
         </m.span>
@@ -52,7 +52,7 @@ export function BookingSuccess({ values, onReset }: BookingSuccessProps) {
           <span className="tabular font-display text-2xl font-bold">{service ? formatPrice(service.price) : '$0'}</span>
         </div>
 
-        <p className="mt-5 flex items-start gap-2 rounded-md bg-accent-2-soft px-3 py-2.5 text-sm text-accent-2">
+        <p className="mt-5 flex items-start gap-2 rounded-md bg-accent-soft px-3 py-2.5 text-sm text-accent-soft-ink">
           <MessageCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
           Enviaremos la confirmación a {values.client_phone}.
         </p>

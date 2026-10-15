@@ -13,9 +13,9 @@ const icons: Record<ToastTone, typeof Info> = {
 };
 
 const iconColor: Record<ToastTone, string> = {
-  success: 'text-success',
-  danger: 'text-danger',
-  info: 'text-info',
+  success: 'text-success-text',
+  danger: 'text-danger-text',
+  info: 'text-info-text',
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
