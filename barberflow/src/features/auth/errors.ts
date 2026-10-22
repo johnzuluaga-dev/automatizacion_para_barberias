@@ -1,4 +1,4 @@
-import { isAuthError } from '@supabase/supabase-js';
+import { FirebaseError } from 'firebase/app';
 
 /** Error de cuenta con un mensaje listo para mostrar (nunca el mensaje crudo del servidor). */
 export class AuthFlowError extends Error {
@@ -13,33 +13,37 @@ export class AuthFlowError extends Error {
 
 const MESSAGES: Record<string, string> = {
   invalid_credentials: 'Correo o contraseña incorrectos.',
-  email_not_confirmed: 'Tu correo aún no está verificado. Te enviamos un código nuevo.',
-  otp_expired: 'El código venció o no es correcto. Revisa los 6 dígitos o pide uno nuevo.',
+  email_in_use: 'Ese correo ya tiene una cuenta. Ingresa con tu contraseña o recupérala.',
   weak_password: 'La contraseña es muy débil. Usa al menos 10 caracteres y combina letras, números o símbolos.',
-  same_password: 'La nueva contraseña debe ser distinta a la anterior.',
-  over_email_send_rate_limit: 'Enviamos demasiados correos seguidos. Espera unos minutos e inténtalo de nuevo.',
-  over_sms_send_rate_limit: 'Enviamos demasiados mensajes seguidos. Espera unos minutos e inténtalo de nuevo.',
-  over_request_rate_limit: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.',
+  over_request_rate_limit: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
   email_address_invalid: 'Revisa el correo: no parece válido.',
-  validation_failed: 'Revisa los datos e inténtalo de nuevo.',
-  signup_disabled: 'El registro está cerrado por ahora.',
+  user_disabled: 'Esta cuenta está deshabilitada. Escríbele a la barbería.',
   session_expired: 'Tu sesión venció. Ingresa de nuevo.',
-  session_not_found: 'Tu sesión venció. Ingresa de nuevo.',
-  phone_provider_disabled: 'El acceso por celular no está disponible.',
-  sms_send_failed: 'No pudimos enviar el SMS. Inténtalo de nuevo o usa tu correo.',
   network: 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.',
+};
+
+const FIREBASE_CODES: Record<string, string> = {
+  'auth/invalid-credential': 'invalid_credentials',
+  'auth/invalid-login-credentials': 'invalid_credentials',
+  'auth/wrong-password': 'invalid_credentials',
+  'auth/user-not-found': 'invalid_credentials',
+  'auth/email-already-in-use': 'email_in_use',
+  'auth/weak-password': 'weak_password',
+  'auth/too-many-requests': 'over_request_rate_limit',
+  'auth/invalid-email': 'email_address_invalid',
+  'auth/user-disabled': 'user_disabled',
+  'auth/requires-recent-login': 'session_expired',
+  'auth/user-token-expired': 'session_expired',
+  'auth/network-request-failed': 'network',
 };
 
 const FALLBACK = 'No pudimos completar la acción. Inténtalo de nuevo.';
 
-/** Convierte cualquier error de Supabase en un AuthFlowError con mensaje en español. */
+/** Convierte cualquier error de Firebase en un AuthFlowError con mensaje en español. */
 export function toAuthFlowError(error: unknown): AuthFlowError {
   if (error instanceof AuthFlowError) return error;
-  if (isAuthError(error)) {
-    if (error.name === 'AuthRetryableFetchError' || error.status === 0) {
-      return new AuthFlowError('network', MESSAGES.network ?? FALLBACK);
-    }
-    const code = error.code ?? (error.status === 429 ? 'over_request_rate_limit' : 'unknown');
+  if (error instanceof FirebaseError) {
+    const code = FIREBASE_CODES[error.code] ?? 'unknown';
     return new AuthFlowError(code, MESSAGES[code] ?? FALLBACK);
   }
   if (error instanceof TypeError) return new AuthFlowError('network', MESSAGES.network ?? FALLBACK);

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/toast/toast-context';
-import { cancelMyAppointment, getMyAppointments, type Appointment } from '@/lib/supabase';
+import { cancelMyAppointment, getMyAppointments, type Appointment } from '@/lib/citas';
 
 interface State {
   appointments: Appointment[];

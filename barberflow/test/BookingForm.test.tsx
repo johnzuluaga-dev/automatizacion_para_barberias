@@ -2,15 +2,15 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { sendBookingToN8n } from '../src/lib/n8n';
-import { createAppointment, DataError, getTakenSlots } from '../src/lib/supabase';
-import type * as SupabaseModule from '../src/lib/supabase';
+import { createAppointment, DataError, getTakenSlots } from '../src/lib/citas';
+import type * as CitasModule from '../src/lib/citas';
 import * as api from './mocks/auth-api';
 import { renderAt } from './mocks/render';
 
 vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
 vi.mock('../src/lib/n8n', () => ({ sendBookingToN8n: vi.fn() }));
-vi.mock('../src/lib/supabase', async () => {
-  const actual = await vi.importActual<typeof SupabaseModule>('../src/lib/supabase');
+vi.mock('../src/lib/citas', async () => {
+  const actual = await vi.importActual<typeof CitasModule>('../src/lib/citas');
   return {
     DataError: actual.DataError,
     createAppointment: vi.fn(),
@@ -98,7 +98,7 @@ describe('reserva con sesión', () => {
     expect(createAppointment).not.toHaveBeenCalled();
   });
 
-  test('crea la cita pendiente en Supabase con los datos del perfil', async () => {
+  test('crea la cita pendiente en Firestore con los datos del perfil', async () => {
     const user = userEvent.setup();
     renderAt('/');
     await chooseSelection(user);
@@ -122,6 +122,16 @@ describe('reserva con sesión', () => {
     expect(sendBookingToN8n).not.toHaveBeenCalled();
   });
 
+  test('con el correo sin verificar pide verificar antes de crear la cita', async () => {
+    api.setTestSession({ id: 'user-9', name: 'Laura Gómez', emailVerified: false });
+    const user = userEvent.setup();
+    renderAt('/');
+    await chooseSelection(user);
+    await user.click(screen.getByRole('button', { name: 'Agendar Cita' }));
+    expect(await screen.findByRole('heading', { name: 'Verifica tu correo' })).toBeInTheDocument();
+    expect(createAppointment).not.toHaveBeenCalled();
+  });
+
   test('las horas ocupadas aparecen deshabilitadas', async () => {
     vi.mocked(getTakenSlots).mockResolvedValue(['16:30']);
     const user = userEvent.setup();
@@ -133,7 +143,7 @@ describe('reserva con sesión', () => {
   });
 
   test('si otra persona toma la hora al mismo tiempo, lo explica', async () => {
-    vi.mocked(createAppointment).mockRejectedValueOnce(new DataError('Esa hora acaba de ocuparse. Elige otra.', '23505'));
+    vi.mocked(createAppointment).mockRejectedValueOnce(new DataError('Esa hora acaba de ocuparse. Elige otra.', 'slot_taken'));
     const user = userEvent.setup();
     renderAt('/');
     await chooseSelection(user);

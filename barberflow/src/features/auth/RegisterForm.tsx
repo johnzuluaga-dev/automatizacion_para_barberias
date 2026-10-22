@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Mail, Phone, User } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -8,13 +8,14 @@ import { PasswordField } from '@/components/ui/PasswordField';
 import { TextField } from '@/components/ui/TextField';
 import { signUp } from './auth-api';
 import { messageFor } from './errors';
-import { savePending } from './pending';
+import { redirectTarget } from './redirect';
 import { validateRegister, type RegisterErrors, type RegisterValues } from './validation';
 
 const FIELD_ORDER: (keyof RegisterValues)[] = ['fullName', 'email', 'phone', 'password', 'terms'];
 
 export function RegisterForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [values, setValues] = useState<RegisterValues>({ fullName: '', email: '', phone: '', password: '', terms: false });
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [attempted, setAttempted] = useState(false);
@@ -43,8 +44,7 @@ export function RegisterForm() {
     try {
       const email = values.email.trim().toLowerCase();
       await signUp({ fullName: values.fullName.trim(), email, phone: values.phone.trim(), password: values.password });
-      savePending({ purpose: 'signup', target: email, sentAt: Date.now() });
-      navigate('/verificar');
+      navigate('/verificar', { state: { from: redirectTarget(location.state), sent: true } });
     } catch (err) {
       setSubmitError(messageFor(err));
       setLoading(false);

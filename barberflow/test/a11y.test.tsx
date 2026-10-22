@@ -3,11 +3,11 @@ import { render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import { AppProviders, AppRoutes } from '../src/App';
-import { getAppointments } from '../src/lib/supabase';
+import { getAppointments } from '../src/lib/citas';
 import * as authApi from './mocks/auth-api';
 
 vi.mock('../src/lib/n8n', () => ({ sendBookingToN8n: vi.fn() }));
-vi.mock('../src/lib/supabase', () => ({
+vi.mock('../src/lib/citas', () => ({
   getAppointments: vi.fn(),
   updateAppointmentStatus: vi.fn(),
   getMyAppointments: vi.fn().mockResolvedValue([]),
@@ -60,8 +60,8 @@ describe('accesibilidad (axe-core)', () => {
   });
 
   test('verificación', async () => {
-    sessionStorage.setItem('barberflow_pending_verification', JSON.stringify({ purpose: 'signup', target: 'a@b.co', sentAt: Date.now() }));
-    expect(await auditAt('/verificar', () => screen.findByRole('button', { name: 'Verificar' }))).toEqual([]);
+    authApi.setTestSession({ emailVerified: false });
+    expect(await auditAt('/verificar', () => screen.findByRole('button', { name: 'Ya verifiqué mi correo' }))).toEqual([]);
   });
 
   test('recuperar contraseña', async () => {
@@ -69,7 +69,7 @@ describe('accesibilidad (axe-core)', () => {
   });
 
   test('mis citas', async () => {
-    authApi.setTestSession({ role: 'client' });
+    authApi.setTestSession({ role: 'cliente' });
     expect(await auditAt('/mis-citas', () => screen.findByText('No tienes citas próximas'))).toEqual([]);
   });
 

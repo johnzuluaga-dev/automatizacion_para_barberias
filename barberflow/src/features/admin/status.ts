@@ -1,5 +1,5 @@
 import type { BadgeTone } from '@/components/ui/Badge';
-import type { Appointment, AppointmentStatus } from '@/lib/supabase';
+import type { Appointment, AppointmentStatus } from '@/lib/citas';
 
 export const STATUS_META: Record<AppointmentStatus, { label: string; tone: BadgeTone }> = {
   pending: { label: 'Pendiente', tone: 'warning' },

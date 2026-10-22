@@ -1,76 +1,51 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { RotateCw } from 'lucide-react';
+import { MailCheck, RotateCw } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
-import { OtpInput } from '@/components/ui/OtpInput';
 import { useToast } from '@/components/ui/toast/toast-context';
 import { formatSeconds, useCountdown } from '@/hooks/useCountdown';
 import { config } from '@/lib/config';
-import {
-  requestPasswordReset,
-  resendSignupCode,
-  sendLoginCode,
-  sendSmsLoginCode,
-  verifyEmailCode,
-  verifyRecoveryCode,
-  verifySmsCode,
-} from './auth-api';
+import { reloadUser, resendVerification } from './auth-api';
 import { messageFor } from './errors';
-import { clearPending, maskTarget, savePending, type PendingVerification } from './pending';
-
-const RESEND: Record<PendingVerification['purpose'], (target: string) => Promise<void>> = {
-  signup: resendSignupCode,
-  login: sendLoginCode,
-  recovery: requestPasswordReset,
-  sms: sendSmsLoginCode,
-};
-
-const VERIFY: Record<PendingVerification['purpose'], (target: string, code: string) => Promise<void>> = {
-  signup: verifyEmailCode,
-  login: verifyEmailCode,
-  recovery: verifyRecoveryCode,
-  sms: verifySmsCode,
-};
+import { maskEmail } from './mask';
 
 interface VerifyFormProps {
-  pending: PendingVerification;
-  /** Destino tras verificar (signup/login). */
+  /** Correo al que se envió el enlace. */
+  email: string;
+  /** Ya se envió el enlace hace un instante (recién registrado). */
+  justSent: boolean;
+  /** Destino al verificar. */
   redirectTo?: string;
 }
 
-export function VerifyForm({ pending: initial, redirectTo = '/' }: VerifyFormProps) {
+export function VerifyForm({ email, justSent, redirectTo = '/' }: VerifyFormProps) {
   const navigate = useNavigate();
   const toast = useToast();
-  const [pending, setPending] = useState(initial);
-  const [code, setCode] = useState('');
+  const [sentAt, setSentAt] = useState(() => (justSent ? Date.now() : 0));
   const [error, setError] = useState<string | null>(null);
-  const [verifying, setVerifying] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [resending, setResending] = useState(false);
-  const remaining = useCountdown(pending.sentAt + config.resendSeconds * 1000);
-  const errorId = 'otp-error';
+  const remaining = useCountdown(sentAt + config.resendSeconds * 1000);
 
-  async function verify(value: string) {
-    if (value.length !== config.otpLength || verifying) return;
-    setVerifying(true);
+  // Al volver a esta pestaña tras abrir el enlace del correo, se revisa solo.
+  useEffect(() => {
+    const onFocus = () => void reloadUser().catch(() => undefined);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
+  async function check() {
+    setChecking(true);
     setError(null);
     try {
-      await VERIFY[pending.purpose](pending.target, value);
-      if (pending.purpose === 'recovery') {
-        navigate('/nueva-contrasena', { replace: true });
-        return;
-      }
-      clearPending();
-      toast({
-        tone: 'success',
-        title: pending.purpose === 'signup' ? 'Tu cuenta quedó verificada' : 'Sesión iniciada',
-      });
-      navigate(redirectTo, { replace: true });
+      await reloadUser();
+      // AuthProvider recibe la sesión actualizada; si ya verificó, la página redirige.
+      setError('Todavía no vemos tu verificación. Abre el enlace del correo y vuelve a intentarlo.');
     } catch (err) {
       setError(messageFor(err));
-      setCode('');
-      setVerifying(false);
-      document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')?.focus();
+    } finally {
+      setChecking(false);
     }
   }
 
@@ -78,11 +53,9 @@ export function VerifyForm({ pending: initial, redirectTo = '/' }: VerifyFormPro
     setResending(true);
     setError(null);
     try {
-      await RESEND[pending.purpose](pending.target);
-      const next = { ...pending, sentAt: Date.now() };
-      savePending(next);
-      setPending(next);
-      toast({ tone: 'info', title: 'Te enviamos un código nuevo' });
+      await resendVerification();
+      setSentAt(Date.now());
+      toast({ tone: 'info', title: 'Te enviamos un enlace nuevo' });
     } catch (err) {
       setError(messageFor(err));
     } finally {
@@ -90,43 +63,23 @@ export function VerifyForm({ pending: initial, redirectTo = '/' }: VerifyFormPro
     }
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (code.length !== config.otpLength) {
-      setError(`Escribe los ${config.otpLength} dígitos del código.`);
-      return;
-    }
-    void verify(code);
-  }
-
   return (
-    <form noValidate onSubmit={handleSubmit} aria-label="Verificar código" className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
+      <span aria-hidden className="grid size-12 place-items-center rounded-full bg-accent-soft text-accent-soft-ink">
+        <MailCheck className="size-6" />
+      </span>
       <p className="text-sm text-muted">
-        Enviamos un código de {config.otpLength} dígitos a <span className="font-medium text-ink">{maskTarget(pending.target)}</span>.
-        {pending.purpose !== 'sms' && ' Revisa también la carpeta de spam.'}
+        Enviamos un enlace a <span className="font-medium text-ink">{maskEmail(email)}</span>. Ábrelo desde tu correo y
+        luego vuelve aquí. Revisa también la carpeta de spam.
       </p>
 
-      <OtpInput
-        value={code}
-        onChange={(v) => {
-          setCode(v);
-          if (error) setError(null);
-        }}
-        onComplete={(v) => void verify(v)}
-        invalid={Boolean(error)}
-        describedBy={error ? errorId : undefined}
-        disabled={verifying}
-        autoFocus
-      />
+      {error && <Alert tone="danger">{error}</Alert>}
 
-      {error && (
-        <div id={errorId}>
-          <Alert tone="danger">{error}</Alert>
-        </div>
-      )}
-
-      <Button type="submit" size="lg" className="w-full" loading={verifying} loadingText="Verificando...">
-        Verificar
+      <Button size="lg" className="w-full" onClick={() => void check()} loading={checking} loadingText="Revisando...">
+        Ya verifiqué mi correo
+      </Button>
+      <Button variant="secondary" size="lg" className="w-full" onClick={() => navigate(redirectTo)}>
+        Verificar más tarde
       </Button>
 
       <div className="flex items-center justify-between gap-3 text-sm">
@@ -143,14 +96,10 @@ export function VerifyForm({ pending: initial, redirectTo = '/' }: VerifyFormPro
             loading={resending}
             icon={<RotateCw aria-hidden className="size-4" />}
           >
-            Reenviar código
+            Reenviar enlace
           </Button>
         )}
       </div>
-
-      {pending.purpose === 'signup' && (
-        <p className="text-xs text-muted">Si ya tenías una cuenta con este correo, no te llegará código: ingresa con tu contraseña.</p>
-      )}
-    </form>
+    </div>
   );
 }

@@ -3,14 +3,14 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { AppProviders, AppRoutes } from '../src/App';
-import { cancelByToken, getAppointments, updateAppointmentStatus, type Appointment } from '../src/lib/supabase';
+import { cancelByToken, getAppointments, updateAppointmentStatus, type Appointment } from '../src/lib/citas';
 import * as authApi from './mocks/auth-api';
 
 vi.mock('../src/lib/n8n', () => ({
   sendBookingToN8n: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-vi.mock('../src/lib/supabase', () => ({
+vi.mock('../src/lib/citas', () => ({
   getAppointments: vi.fn(),
   updateAppointmentStatus: vi.fn().mockResolvedValue(undefined),
   getMyAppointments: vi.fn().mockResolvedValue([]),
@@ -109,10 +109,10 @@ describe('admin', () => {
   });
 
   test('muestra error y permite reintentar si falla la carga', async () => {
-    vi.mocked(getAppointments).mockRejectedValueOnce(new Error('Supabase error 500'));
+    vi.mocked(getAppointments).mockRejectedValueOnce(new Error('Error 500'));
     const user = userEvent.setup();
     renderAt('/admin');
-    expect(await screen.findByText('Supabase error 500')).toBeInTheDocument();
+    expect(await screen.findByText('Error 500')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByText('Laura Gómez')).toBeInTheDocument();
   });

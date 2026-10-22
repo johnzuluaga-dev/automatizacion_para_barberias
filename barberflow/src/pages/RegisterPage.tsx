@@ -14,7 +14,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Crea tu cuenta"
-      description="Te enviaremos un código a tu correo para verificarla."
+      description="Te enviaremos un enlace a tu correo para verificarla."
       footer={
         <>
           ¿Ya tienes cuenta?{' '}

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { buttonStyles } from '@/components/ui/button-styles';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
-import { cancelByToken } from '@/lib/supabase';
+import { cancelByToken } from '@/lib/citas';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 

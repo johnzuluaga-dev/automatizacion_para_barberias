@@ -1,16 +1,15 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { MailCheck, Mail } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { buttonStyles } from '@/components/ui/button-styles';
 import { TextField } from '@/components/ui/TextField';
 import { requestPasswordReset } from './auth-api';
 import { messageFor } from './errors';
-import { savePending } from './pending';
 import { validateEmail } from './validation';
 
 export function ForgotPasswordForm() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [fieldError, setFieldError] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
@@ -26,9 +25,7 @@ export function ForgotPasswordForm() {
 
     setLoading(true);
     try {
-      const target = email.trim().toLowerCase();
-      await requestPasswordReset(target);
-      savePending({ purpose: 'recovery', target, sentAt: Date.now() });
+      await requestPasswordReset(email.trim().toLowerCase());
       setSent(true);
     } catch (err) {
       setError(messageFor(err));
@@ -41,21 +38,21 @@ export function ForgotPasswordForm() {
     return (
       <div className="flex flex-col gap-5">
         <Alert tone="success" title="Revisa tu correo">
-          Si el correo está registrado, te enviamos un enlace y un código para crear una contraseña nueva.
+          Si el correo está registrado, te enviamos un enlace para crear una contraseña nueva.
         </Alert>
         <span aria-hidden className="grid size-12 place-items-center rounded-full bg-accent-soft text-accent-soft-ink">
           <MailCheck className="size-6" />
         </span>
-        <Button size="lg" className="w-full" onClick={() => navigate('/verificar')}>
-          Tengo un código
-        </Button>
-        <p className="text-sm text-muted">También puedes abrir el enlace del correo desde este mismo dispositivo.</p>
+        <p className="text-sm text-muted">Abre el enlace, elige tu contraseña nueva y luego ingresa con ella.</p>
+        <Link to="/ingresar" className={buttonStyles({ size: 'lg', className: 'w-full' })}>
+          Volver a ingresar
+        </Link>
       </div>
     );
   }
 
   return (
-    <form noValidate onSubmit={handleSubmit} aria-label="Recuperar contraseña" className="flex flex-col gap-5">
+    <form noValidate onSubmit={(e) => void handleSubmit(e)} aria-label="Recuperar contraseña" className="flex flex-col gap-5">
       {error && <Alert tone="danger">{error}</Alert>}
       <TextField
         id="forgot-email"

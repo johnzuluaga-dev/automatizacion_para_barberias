@@ -15,7 +15,7 @@ import { STATUS_META } from '@/features/admin/status';
 import { useMyAppointments } from '@/features/appointments/useMyAppointments';
 import { useAuth } from '@/features/auth/auth-context';
 import { formatLongDate, fromIsoDate, toIsoDate } from '@/features/booking/schedule';
-import type { Appointment } from '@/lib/supabase';
+import type { Appointment } from '@/lib/citas';
 
 function isUpcoming(a: Appointment, today: string) {
   return a.appointment_date >= today && (a.status === 'pending' || a.status === 'confirmed');

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getTakenSlots } from '@/lib/supabase';
+import { getTakenSlots } from '@/lib/citas';
 
 interface Entry {
   key: string;

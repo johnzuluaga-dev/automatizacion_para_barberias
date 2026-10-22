@@ -1,6 +1,6 @@
 /**
  * Aviso opcional a n8n de cada reserva (mismo payload que la versión original).
- * Solo se usa si VITE_N8N_ENABLED=true; la cita ya queda guardada en Supabase.
+ * Solo se usa si VITE_N8N_ENABLED=true; la cita ya queda guardada en Firestore.
  */
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;

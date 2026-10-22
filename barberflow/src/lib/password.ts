@@ -14,7 +14,7 @@ const COMMON = ['123456', 'password', 'contraseña', 'qwerty', 'barberflow', 'ab
 
 /**
  * Estimación local y liviana (sin librerías pesadas). La regla dura —mínimo de
- * caracteres— la valida también Supabase en el servidor.
+ * caracteres— la valida también Firebase en el servidor.
  */
 export function measurePassword(password: string): PasswordStrength {
   if (!password) return { score: 0, label: LABELS[0] };

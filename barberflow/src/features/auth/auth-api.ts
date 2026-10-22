@@ -1,18 +1,35 @@
 /**
- * Flujos de cuenta sobre Supabase Auth. Ningún código, token ni contraseña se
- * escribe en la consola; los errores salen ya traducidos (ver errors.ts).
+ * Flujos de cuenta sobre Firebase Auth. Ningún token ni contraseña se escribe en
+ * la consola; los errores salen ya traducidos (ver errors.ts).
  */
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase-client';
-import { AuthFlowError, toAuthFlowError } from './errors';
+import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  type User,
+} from 'firebase/auth';
+import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { toAuthFlowError } from './errors';
+import { toE164 } from './validation';
 
-export type Role = 'admin' | 'client';
+export type Role = 'admin' | 'barbero' | 'cliente';
+
+/** Persona con sesión. El rol viene del custom claim del token, no del perfil. */
+export interface AuthUser {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  role: Role;
+}
 
 export interface Profile {
   id: string;
   full_name: string | null;
   phone: string | null;
-  role: Role;
 }
 
 export interface SignUpInput {
@@ -24,127 +41,114 @@ export interface SignUpInput {
 
 const origin = () => window.location.origin;
 
-/** Ejecuta una llamada de Supabase Auth y lanza un AuthFlowError si falla. */
-async function run(fn: () => Promise<{ error: unknown }>): Promise<void> {
-  let result: { error: unknown };
+/** Ejecuta una llamada de Firebase Auth y lanza un AuthFlowError si falla. */
+async function run<T>(fn: () => Promise<T>): Promise<T> {
   try {
-    result = await fn();
+    return await fn();
   } catch (err) {
     throw toAuthFlowError(err);
   }
-  if (result.error) throw toAuthFlowError(result.error);
 }
 
 /* ---------------------------- Sesión y perfil ---------------------------- */
 
-export function subscribeToAuth(callback: (event: AuthChangeEvent, session: Session | null) => void) {
-  const { data } = supabase.auth.onAuthStateChange(callback);
-  return () => data.subscription.unsubscribe();
+async function toAuthUser(user: User): Promise<AuthUser> {
+  let role: Role = 'cliente';
+  try {
+    const claim = (await user.getIdTokenResult()).claims.rol;
+    if (claim === 'admin' || claim === 'barbero') role = claim;
+  } catch {
+    // Sin token legible se trata como cliente; las reglas de Firestore mandan igual.
+  }
+  return { id: user.uid, email: user.email ?? '', emailVerified: user.emailVerified, role };
 }
 
-export async function getMyProfile(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, phone, role')
-    .eq('id', userId)
-    .maybeSingle();
-  if (error) return null;
-  return data as Profile | null;
+const manualRefresh = new Set<() => void>();
+
+/** Avisa la sesión actual (null si no hay) y cada cambio posterior. */
+export function subscribeToAuth(callback: (user: AuthUser | null) => void) {
+  let latest = 0;
+  const push = async (user: User | null) => {
+    const mine = ++latest;
+    const next = user ? await toAuthUser(user) : null;
+    if (mine === latest) callback(next);
+  };
+  const stop = onAuthStateChanged(auth, (user) => void push(user));
+  const refresh = () => void push(auth.currentUser);
+  manualRefresh.add(refresh);
+  return () => {
+    stop();
+    manualRefresh.delete(refresh);
+  };
+}
+
+/** Perfil en vivo: así aparece solo cuando el registro termina de guardarlo. */
+export function subscribeToProfile(userId: string, callback: (profile: Profile | null) => void) {
+  return onSnapshot(
+    doc(db, 'perfiles', userId),
+    (snap) => {
+      const data = snap.data();
+      callback(data ? { id: userId, full_name: data.nombre ?? null, phone: data.telefono ?? null } : null);
+    },
+    () => callback(null),
+  );
 }
 
 export async function signOut(): Promise<void> {
-  await run(async () => supabase.auth.signOut());
+  await run(() => firebaseSignOut(auth));
+}
+
+/** Vuelve a leer la cuenta y el token (tras abrir el enlace de verificación). */
+export async function reloadUser(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) return;
+  await run(async () => {
+    await user.reload();
+    await user.getIdToken(true);
+  });
+  manualRefresh.forEach((refresh) => refresh());
 }
 
 /* -------------------------------- Registro ------------------------------- */
 
-/**
- * Crea la cuenta y dispara el correo con el código de 6 dígitos.
- * Si el correo ya existe, Supabase responde igual que un registro nuevo
- * (no revela qué correos están registrados); el flujo continúa a /verificar.
- */
+/** Crea la cuenta, guarda el perfil y envía el enlace para verificar el correo. */
 export async function signUp({ fullName, email, phone, password }: SignUpInput): Promise<void> {
-  await run(async () =>
-    supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${origin()}/ingresar`,
-        data: {
-          full_name: fullName,
-          phone: phone || null,
-          terms_accepted_at: new Date().toISOString(),
-        },
-      },
-    }),
-  );
+  await run(async () => {
+    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'perfiles', user.uid), {
+      nombre: fullName,
+      telefono: phone ? toE164(phone) : null,
+      terminosAceptadosEn: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    await sendEmailVerification(user, { url: `${origin()}/ingresar` });
+  });
 }
 
-export async function verifyEmailCode(email: string, token: string): Promise<void> {
-  await run(async () => supabase.auth.verifyOtp({ email, token, type: 'email' }));
-}
-
-export async function resendSignupCode(email: string): Promise<void> {
-  await run(async () =>
-    supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: `${origin()}/ingresar` } }),
-  );
+export async function resendVerification(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw toAuthFlowError(new Error('sin sesión'));
+  await run(() => sendEmailVerification(user, { url: `${origin()}/ingresar` }));
 }
 
 /* ------------------------------ Inicio de sesión ------------------------- */
 
 export async function signInWithPassword(email: string, password: string): Promise<void> {
-  await run(async () => supabase.auth.signInWithPassword({ email, password }));
-}
-
-/**
- * Envía un código para entrar sin contraseña. No crea cuentas nuevas y no
- * revela si el correo existe: un correo desconocido se trata como enviado.
- */
-export async function sendLoginCode(email: string): Promise<void> {
-  try {
-    await run(async () => supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } }));
-  } catch (err) {
-    const error = toAuthFlowError(err);
-    if (error.code.startsWith('over_') || error.code === 'network') throw error;
-  }
-}
-
-export async function sendSmsLoginCode(phone: string): Promise<void> {
-  try {
-    await run(async () => supabase.auth.signInWithOtp({ phone, options: { shouldCreateUser: false } }));
-  } catch (err) {
-    const error = toAuthFlowError(err);
-    if (error.code.startsWith('over_') || error.code === 'network' || error.code === 'phone_provider_disabled') throw error;
-  }
-}
-
-export async function verifySmsCode(phone: string, token: string): Promise<void> {
-  await run(async () => supabase.auth.verifyOtp({ phone, token, type: 'sms' }));
+  await run(() => signInWithEmailAndPassword(auth, email, password));
 }
 
 /* ------------------------------- Recuperación ---------------------------- */
 
 /**
- * Envía el correo de recuperación (enlace + código). Siempre "tiene éxito"
- * para no revelar si el correo existe, salvo límite de envíos o sin conexión.
+ * Envía el correo con el enlace para crear una contraseña nueva. Siempre "tiene
+ * éxito" para no revelar si el correo existe, salvo límite de envíos o sin conexión.
  */
 export async function requestPasswordReset(email: string): Promise<void> {
   try {
-    await run(async () => supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin()}/nueva-contrasena` }));
+    await run(() => sendPasswordResetEmail(auth, email, { url: `${origin()}/ingresar` }));
   } catch (err) {
     const error = toAuthFlowError(err);
-    if (error.code.startsWith('over_') || error.code === 'network') throw error;
+    if (error.code === 'over_request_rate_limit' || error.code === 'network') throw error;
   }
-}
-
-export async function verifyRecoveryCode(email: string, token: string): Promise<void> {
-  await run(async () => supabase.auth.verifyOtp({ email, token, type: 'recovery' }));
-}
-
-export async function updatePassword(password: string): Promise<void> {
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) {
-    throw new AuthFlowError('session_expired', 'El enlace o código venció. Pide uno nuevo para cambiar tu contraseña.');
-  }
-  await run(async () => supabase.auth.updateUser({ password }));
 }

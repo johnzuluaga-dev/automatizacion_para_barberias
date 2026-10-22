@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { fireEvent, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthFlowError } from '../src/features/auth/errors';
-import { savePending } from '../src/features/auth/pending';
 import * as api from './mocks/auth-api';
 import { renderAt } from './mocks/render';
 
 vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
-vi.mock('../src/lib/supabase', () => ({
+vi.mock('../src/lib/citas', () => ({
   getAppointments: vi.fn().mockResolvedValue([]),
   getMyAppointments: vi.fn().mockResolvedValue([]),
   updateAppointmentStatus: vi.fn(),
@@ -20,11 +19,6 @@ vi.mock('../src/lib/supabase', () => ({
 beforeEach(() => {
   api.resetAuthMock();
 });
-
-function pasteCode(code: string) {
-  const first = screen.getAllByRole('textbox', { name: /dígito/i })[0] as HTMLElement;
-  fireEvent.paste(first, { clipboardData: { getData: () => code } });
-}
 
 describe('registro', () => {
   test('valida los campos y no envía si faltan datos', async () => {
@@ -47,6 +41,9 @@ describe('registro', () => {
   });
 
   test('crea la cuenta y pasa a verificar el correo', async () => {
+    api.signUp.mockImplementationOnce(async () => {
+      api.setTestSession({ email: 'laura@correo.com', emailVerified: false });
+    });
     const user = userEvent.setup();
     renderAt('/registro');
     await user.type(await screen.findByLabelText(/^nombre completo/i), 'Laura Gómez');
@@ -65,52 +62,56 @@ describe('registro', () => {
     expect(await screen.findByRole('heading', { name: 'Verifica tu correo' })).toBeInTheDocument();
     expect(screen.getByText('l***@correo.com')).toBeInTheDocument();
   });
+
+  test('un correo repetido muestra el mensaje de la cuenta existente', async () => {
+    api.signUp.mockRejectedValueOnce(new AuthFlowError('email_in_use', 'Ese correo ya tiene una cuenta.'));
+    const user = userEvent.setup();
+    renderAt('/registro');
+    await user.type(await screen.findByLabelText(/^nombre completo/i), 'Laura Gómez');
+    await user.type(screen.getByLabelText(/^correo/i), 'laura@correo.com');
+    await user.type(screen.getByLabelText(/^contraseña/i), 'Tijeras-Azules-2026');
+    await user.click(screen.getByRole('checkbox'));
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ese correo ya tiene una cuenta.');
+  });
 });
 
-describe('verificación', () => {
-  test('6 casillas con one-time-code; pegar el código verifica la cuenta', async () => {
-    savePending({ purpose: 'signup', target: 'laura@correo.com', sentAt: Date.now() });
-    renderAt('/verificar');
-    await screen.findByRole('heading', { name: 'Verifica tu correo' });
-    const boxes = screen.getAllByRole('textbox', { name: /dígito/i });
-    expect(boxes).toHaveLength(6);
-    expect(boxes[0]).toHaveAttribute('autocomplete', 'one-time-code');
-
-    pasteCode('482913');
-    expect(api.verifyEmailCode).toHaveBeenCalledWith('laura@correo.com', '482913');
-    expect(await screen.findByText('Tu cuenta quedó verificada')).toBeInTheDocument();
-  });
-
-  test('código vencido o incorrecto: mensaje claro y casillas vacías', async () => {
-    api.verifyEmailCode.mockRejectedValueOnce(
-      new AuthFlowError('otp_expired', 'El código venció o no es correcto. Revisa los 6 dígitos o pide uno nuevo.'),
-    );
-    savePending({ purpose: 'signup', target: 'laura@correo.com', sentAt: Date.now() });
-    renderAt('/verificar');
-    await screen.findByRole('heading', { name: 'Verifica tu correo' });
-    pasteCode('000000');
-    expect(await screen.findByText(/el código venció o no es correcto/i)).toBeInTheDocument();
-    expect(screen.getAllByRole('textbox', { name: /dígito/i })[0]).toHaveValue('');
-  });
-
-  test('reenviar espera 60 s y luego reenvía', async () => {
-    savePending({ purpose: 'signup', target: 'laura@correo.com', sentAt: Date.now() });
-    const view = renderAt('/verificar');
-    expect(await screen.findByText(/reenviar en 1:00|reenviar en 0:5\d/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /reenviar código/i })).not.toBeInTheDocument();
-    view.unmount();
-
-    savePending({ purpose: 'signup', target: 'laura@correo.com', sentAt: Date.now() - 61_000 });
+describe('verificación del correo', () => {
+  test('con el correo sin verificar muestra el aviso y permite revisar', async () => {
+    api.setTestSession({ email: 'laura@correo.com', emailVerified: false });
     const user = userEvent.setup();
     renderAt('/verificar');
-    await user.click(await screen.findByRole('button', { name: /reenviar código/i }));
-    expect(api.resendSignupCode).toHaveBeenCalledWith('laura@correo.com');
-    expect(await screen.findByText('Te enviamos un código nuevo')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Verifica tu correo' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ya verifiqué mi correo' }));
+    expect(api.reloadUser).toHaveBeenCalled();
+    expect(await screen.findByText(/todavía no vemos tu verificación/i)).toBeInTheDocument();
   });
 
-  test('sin verificación pendiente ofrece volver a ingresar', async () => {
+  test('reenviar el enlace espera 60 s tras el envío inicial', async () => {
+    api.setTestSession({ email: 'laura@correo.com', emailVerified: false });
+    renderAt('/verificar', { sent: true });
+    expect(await screen.findByText(/reenviar en 1:00|reenviar en 0:5\d/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /reenviar enlace/i })).not.toBeInTheDocument();
+  });
+
+  test('si no se acaba de enviar, reenvía el enlace', async () => {
+    api.setTestSession({ email: 'laura@correo.com', emailVerified: false });
+    const user = userEvent.setup();
     renderAt('/verificar');
-    expect(await screen.findByRole('heading', { name: 'No hay un código pendiente' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: /reenviar enlace/i }));
+    expect(api.resendVerification).toHaveBeenCalled();
+    expect(await screen.findByText('Te enviamos un enlace nuevo')).toBeInTheDocument();
+  });
+
+  test('con el correo ya verificado vuelve a donde iba', async () => {
+    api.setTestSession({ email: 'laura@correo.com', emailVerified: true });
+    renderAt('/verificar', { from: '/mis-citas' });
+    expect(await screen.findByRole('heading', { name: 'Mis citas' })).toBeInTheDocument();
+  });
+
+  test('sin sesión ofrece ingresar', async () => {
+    renderAt('/verificar');
+    expect(await screen.findByRole('heading', { name: 'Ingresa para verificar tu correo' })).toBeInTheDocument();
   });
 });
 
@@ -137,27 +138,6 @@ describe('inicio de sesión', () => {
     await user.click(screen.getByRole('button', { name: 'Ingresar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Correo o contraseña incorrectos.');
   });
-
-  test('cuenta sin verificar: reenvía el código y pide verificar', async () => {
-    api.signInWithPassword.mockRejectedValueOnce(new AuthFlowError('email_not_confirmed', 'x'));
-    const user = userEvent.setup();
-    renderAt('/ingresar');
-    await user.type(await screen.findByLabelText(/^correo/i), 'laura@correo.com');
-    await user.type(screen.getByLabelText(/^contraseña/i), 'Tijeras-Azules-2026');
-    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
-    expect(await screen.findByRole('heading', { name: 'Verifica tu correo' })).toBeInTheDocument();
-    expect(api.resendSignupCode).toHaveBeenCalledWith('laura@correo.com');
-  });
-
-  test('entrar con código envía el código y abre la verificación', async () => {
-    const user = userEvent.setup();
-    renderAt('/ingresar');
-    await user.click(await screen.findByRole('button', { name: 'Con código' }));
-    await user.type(screen.getByLabelText(/^correo/i), 'laura@correo.com');
-    await user.click(screen.getByRole('button', { name: 'Enviarme un código' }));
-    expect(api.sendLoginCode).toHaveBeenCalledWith('laura@correo.com');
-    expect(await screen.findByRole('heading', { name: 'Escribe tu código' })).toBeInTheDocument();
-  });
 });
 
 describe('recuperación de contraseña', () => {
@@ -169,40 +149,6 @@ describe('recuperación de contraseña', () => {
     expect(api.requestPasswordReset).toHaveBeenCalledWith('nadie@correo.com');
     expect(await screen.findByText(/si el correo está registrado/i)).toBeInTheDocument();
   });
-
-  test('el código de recuperación lleva a crear la contraseña nueva', async () => {
-    api.verifyRecoveryCode.mockImplementationOnce(async () => {
-      api.setTestSession({ email: 'laura@correo.com' });
-    });
-    savePending({ purpose: 'recovery', target: 'laura@correo.com', sentAt: Date.now() });
-    renderAt('/verificar');
-    await screen.findByRole('heading', { name: 'Código de recuperación' });
-    pasteCode('123456');
-    expect(api.verifyRecoveryCode).toHaveBeenCalledWith('laura@correo.com', '123456');
-    expect(await screen.findByRole('heading', { name: 'Crea una contraseña nueva' })).toBeInTheDocument();
-  });
-
-  test('/nueva-contrasena sin sesión explica que el enlace venció', async () => {
-    renderAt('/nueva-contrasena');
-    expect(await screen.findByRole('heading', { name: 'El enlace venció' })).toBeInTheDocument();
-  });
-
-  test('valida coincidencia y guarda la contraseña nueva', async () => {
-    api.setTestSession({ email: 'laura@correo.com' });
-    const user = userEvent.setup();
-    renderAt('/nueva-contrasena');
-    await user.type(await screen.findByLabelText(/^nueva contraseña/i, { selector: 'input' }), 'Navaja-Nueva-2026');
-    await user.type(screen.getByLabelText(/^repite la contraseña/i), 'Navaja-Nueva-2025');
-    await user.click(screen.getByRole('button', { name: 'Guardar contraseña' }));
-    expect(screen.getByText('Las contraseñas no coinciden.')).toBeInTheDocument();
-    expect(api.updatePassword).not.toHaveBeenCalled();
-
-    await user.clear(screen.getByLabelText(/^repite la contraseña/i));
-    await user.type(screen.getByLabelText(/^repite la contraseña/i), 'Navaja-Nueva-2026');
-    await user.click(screen.getByRole('button', { name: 'Guardar contraseña' }));
-    expect(api.updatePassword).toHaveBeenCalledWith('Navaja-Nueva-2026');
-    expect(await screen.findByText('Contraseña actualizada')).toBeInTheDocument();
-  });
 });
 
 describe('rutas protegidas', () => {
@@ -212,7 +158,7 @@ describe('rutas protegidas', () => {
   });
 
   test('/admin con rol cliente muestra "sin acceso"', async () => {
-    api.setTestSession({ role: 'client' });
+    api.setTestSession({ role: 'cliente' });
     renderAt('/admin');
     expect(await screen.findByRole('heading', { name: 'No tienes acceso a esta sección' })).toBeInTheDocument();
   });

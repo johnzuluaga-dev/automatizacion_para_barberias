@@ -8,7 +8,7 @@ import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/features/auth/auth-context';
 import { config } from '@/lib/config';
 import { sendBookingToN8n } from '@/lib/n8n';
-import { createAppointment, DataError } from '@/lib/supabase';
+import { createAppointment, DataError } from '@/lib/citas';
 import { BarberPicker } from './BarberPicker';
 import { BookingHero } from './BookingHero';
 import { BookingSuccess } from './BookingSuccess';
@@ -87,6 +87,13 @@ export function BookingForm() {
       return;
     }
 
+    if (!user.emailVerified) {
+      // Las reglas exigen correo verificado para reservar: se guarda la selección y se pide verificar.
+      saveDraft(effective);
+      navigate('/verificar', { state: { from: '/' } });
+      return;
+    }
+
     setStatus('loading');
     try {
       const booking = {
@@ -106,7 +113,7 @@ export function BookingForm() {
       setStatus('success');
       window.scrollTo({ top: 0 });
     } catch (err) {
-      if (err instanceof DataError && err.code === '23505') {
+      if (err instanceof DataError && err.code === 'slot_taken') {
         refreshTaken();
         setValues((v) => ({ ...v, appointment_time: '' }));
       }

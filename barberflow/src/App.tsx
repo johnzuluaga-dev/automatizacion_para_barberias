@@ -12,7 +12,6 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const VerifyPage = lazy(() => import('./pages/VerifyPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
-const NewPasswordPage = lazy(() => import('./pages/NewPasswordPage'));
 const MyAppointmentsPage = lazy(() => import('./pages/MyAppointmentsPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const CancelPage = lazy(() => import('./pages/CancelPage'));
@@ -33,7 +32,6 @@ export function AppRoutes() {
           <Route path="/registro" element={<RegisterPage />} />
           <Route path="/verificar" element={<VerifyPage />} />
           <Route path="/olvide-contrasena" element={<ForgotPasswordPage />} />
-          <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
           <Route path="/terminos" element={<TermsPage />} />
           <Route path="/cancel" element={<CancelPage />} />
           <Route

@@ -1,3 +1,5 @@
+
+
 # 💈 BarberFlow – Automatización para Barberías
 
 ## 📌 Descripción del Proyecto
@@ -61,7 +63,7 @@ Backend
 
 Base de Datos
 
-* Gestión de datos mediante Supabase
+* Gestión de datos mediante Firebase (Firestore)
 
 Integraciones
 
@@ -87,7 +89,7 @@ npm run dev            # http://localhost:3000
 npm run check          # typecheck + lint + pruebas + build
 ```
 
-Las cuentas, roles y permisos usan **Supabase Auth**. Para activarlos sigue [supabase/README.md](supabase/README.md) (SQL a ejecutar, configuración del panel, correo y plantillas).
+Las cuentas, roles y permisos usan **Firebase Authentication** y las reglas de Firestore. Diseño, reglas y datos de prueba están en [firebase/DISENO.md](firebase/DISENO.md). Antes de usarlo: activa Correo/contraseña en Authentication, carga el seed (`npm run seed` en `firebase/`) y publica las reglas (`firebase deploy --only firestore:rules,firestore:indexes`).
 
 Más detalle de las pruebas en [TESTING.md](TESTING.md).
 
