@@ -1,0 +1,36 @@
+# Variables de entorno y claves: nunca se suben
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Cuentas de servicio y credenciales (Firebase, Google Cloud)
+*-adminsdk-*.json
+*serviceAccount*.json
+*service-account*.json
+service-account*.json
+serviceAccountKey*.json
+application_default_credentials.json
+firebase-key*.json
+credentials*.json
+
+# Claves y certificados
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa*
+id_ed25519*
+
+# Dependencias, builds y registros
+node_modules/
+dist/
+build/
+coverage/
+*.log
+.firebase/
+.DS_Store
