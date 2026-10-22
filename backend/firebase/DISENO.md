@@ -87,11 +87,11 @@ n8n usa cuenta de servicio y se salta las reglas.
 
 ## 5. Cambios en el código React
 
-1. Reemplazar `@supabase/supabase-js` por el SDK de Firebase (`firebase/app`, `auth`, `firestore`); reescribir [supabase.ts](../barberflow/src/lib/supabase.ts), [supabase-client.ts](../barberflow/src/lib/supabase-client.ts) y `auth-api.ts`.
-2. Leer barberos y servicios de Firestore en vez de [catalog.ts](../barberflow/src/features/booking/catalog.ts); guardar ids (`barberoId`, `servicios[]`) y no nombres sueltos.
+1. Reemplazar `@supabase/supabase-js` por el SDK de Firebase (`firebase/app`, `auth`, `firestore`); reescribir [supabase.ts](../../frontend/src/lib/supabase.ts), [supabase-client.ts](../../frontend/src/lib/supabase-client.ts) y `auth-api.ts`.
+2. Leer barberos y servicios de Firestore en vez de [catalog.ts](../../frontend/src/features/booking/catalog.ts); guardar ids (`barberoId`, `servicios[]`) y no nombres sueltos.
 3. Estados en español (`pendiente`, `confirmada`, `completada`, `cancelada`, `no_asistio`) en `status.ts`, `STATUS_META`, `computeStats` y los tests. Roles `admin | barbero | cliente`.
 4. Reservar con el batch cita + cupos; `useTakenSlots` lee `citas_slots`; el código de error de doble reserva pasa de `23505` a un fallo de la escritura.
-5. Que [schedule.ts](../barberflow/src/features/booking/schedule.ts) use `horarioSemanal` del barbero, `bloqueos_barbero` y la duración del servicio, en vez de las constantes 11–20.
+5. Que [schedule.ts](../../frontend/src/features/booking/schedule.ts) use `horarioSemanal` del barbero, `bloqueos_barbero` y la duración del servicio, en vez de las constantes 11–20.
 6. Normalizar el teléfono a `+57…` en `validation.ts`.
 7. Cancelación: guardar `canceladaEn`, `canceladaPor`, `motivoCancelacion`; `CancelPage` llama al webhook de n8n con el token.
 8. `RequireAuth` y la sesión leen el rol del claim del token; página nueva para el barbero con sus citas.

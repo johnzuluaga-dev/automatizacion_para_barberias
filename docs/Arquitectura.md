@@ -119,7 +119,7 @@ El funcionamiento general del sistema sigue el siguiente flujo:
 
 Los diagramas utilizados para describir la arquitectura del sistema se encuentran en la carpeta:
 
-/diagrams
+/docs/diagrams
 
 Diagramas incluidos:
 

@@ -1,6 +1,6 @@
 # Pruebas — Frontend BarberFlow
 
-Pruebas del frontend (`barberflow/`) con **Vitest** y **React Testing Library** en `jsdom`. Ninguna prueba llama a Supabase ni a n8n: se simulan con `vi.mock`.
+Pruebas del frontend (`frontend/`) con **Vitest** y **React Testing Library** en `jsdom`. Ninguna prueba llama a Supabase ni a n8n: se simulan con `vi.mock`.
 
 ## Cómo ejecutarlas
 

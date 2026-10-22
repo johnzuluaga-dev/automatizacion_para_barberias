@@ -77,7 +77,7 @@ Control de versiones
 
 # 🖥 Frontend: cómo correrlo
 
-La app web está en `barberflow/` (Vite + React + TypeScript + Tailwind CSS). Requiere Node 24 (ver `.nvmrc`).
+La app web está en `frontend/` (Vite + React + TypeScript + Tailwind CSS). Requiere Node 24 (ver `.nvmrc`).
 
 ```bash
 cd barberflow
@@ -87,9 +87,9 @@ npm run dev            # http://localhost:3000
 npm run check          # typecheck + lint + pruebas + build
 ```
 
-Las cuentas, roles y permisos usan **Firebase Authentication** y las reglas de Firestore. Diseño, reglas y datos de prueba están en [firebase/DISENO.md](firebase/DISENO.md). Antes de usarlo: activa Correo/contraseña en Authentication, carga el seed (`npm run seed` en `firebase/`) y publica las reglas (`firebase deploy --only firestore:rules,firestore:indexes`).
+Las cuentas, roles y permisos usan **Firebase Authentication** y las reglas de Firestore. Diseño, reglas y datos de prueba están en [backend/firebase/DISENO.md](backend/firebase/DISENO.md). Antes de usarlo: activa Correo/contraseña en Authentication, carga el seed (`npm run seed` en `firebase/`) y publica las reglas (`firebase deploy --only firestore:rules,firestore:indexes`).
 
-Más detalle de las pruebas en [TESTING.md](TESTING.md).
+Más detalle de las pruebas en [docs/TESTING.md](docs/TESTING.md).
 
 ---
 
