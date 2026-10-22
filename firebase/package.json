@@ -1,0 +1,13 @@
+{
+  "name": "barberflow-firebase-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Scripts de administración (cuenta de servicio). No forman parte de la app web.",
+  "scripts": {
+    "seed": "node seed/seed.mjs",
+    "rol": "node scripts/asignar_rol.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

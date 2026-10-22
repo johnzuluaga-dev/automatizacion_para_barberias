@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "clienteId", "order": "ASCENDING" }, { "fieldPath": "inicio", "order": "DESCENDING" } ] },
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "barberoId", "order": "ASCENDING" }, { "fieldPath": "inicio", "order": "ASCENDING" } ] },
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "estado", "order": "ASCENDING" }, { "fieldPath": "inicio", "order": "ASCENDING" } ] },
+    { "collectionGroup": "citas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "cancelToken", "order": "ASCENDING" }, { "fieldPath": "estado", "order": "ASCENDING" } ] },
+    { "collectionGroup": "recordatorios", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "estado", "order": "ASCENDING" }, { "fieldPath": "programadoPara", "order": "ASCENDING" } ] },
+    { "collectionGroup": "bloqueos_barbero", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "barberoId", "order": "ASCENDING" }, { "fieldPath": "fin", "order": "ASCENDING" } ] },
+    { "collectionGroup": "resenas", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "barberoId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" } ] },
+    { "collectionGroup": "notificaciones_log", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "citaId", "order": "ASCENDING" }, { "fieldPath": "createdAt", "order": "DESCENDING" } ] }
+  ],
+  "fieldOverrides": []
+}

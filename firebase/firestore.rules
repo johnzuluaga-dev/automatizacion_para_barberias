@@ -1,0 +1,121 @@
+rules_version = '2';
+
+// SIN PROBAR con el emulador. Probar con `firebase emulators:start` antes de usar en producción.
+// n8n y los scripts usan una cuenta de servicio (Admin SDK / REST) y se saltan estas reglas.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------ Ayudas ------------------------------
+    function signedIn() { return request.auth != null; }
+    // El rol vive en un custom claim (se asigna con scripts/asignar_rol.mjs): no cuesta lecturas.
+    function rol() { return signedIn() && ('rol' in request.auth.token) ? request.auth.token.rol : 'cliente'; }
+    function isAdmin() { return rol() == 'admin'; }
+    function isBarbero() { return rol() == 'barbero' && ('barberoId' in request.auth.token); }
+    function miBarberoId() { return request.auth.token.barberoId; }
+    function emailVerificado() { return request.auth.token.email_verified == true; }
+    function validPhone(v) { return v == null || (v is string && v.matches('^\\+[1-9][0-9]{7,14}$')); }
+    function cita(id) { return /databases/$(database)/documents/citas/$(id); }
+
+    // ------------------------------ perfiles ------------------------------
+    match /perfiles/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nombre', 'telefono', 'avatarUrl', 'terminosAceptadosEn', 'createdAt', 'updatedAt'])
+        && validPhone(request.resource.data.get('telefono', null));
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'telefono', 'avatarUrl', 'updatedAt'])
+        && validPhone(request.resource.data.get('telefono', null));
+      allow write: if isAdmin();
+    }
+
+    // ------------------- Catálogo público (solo el admin escribe) -------------------
+    match /sedes/{id}     { allow read: if true; allow write: if isAdmin(); }
+    match /servicios/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /barberos/{id}  { allow read: if true; allow write: if isAdmin(); }
+    match /configuracion/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+
+    // ------------------------------ bloqueos_barbero ------------------------------
+    match /bloqueos_barbero/{id} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || (isBarbero() && request.resource.data.barberoId == miBarberoId());
+      allow delete: if isAdmin() || (isBarbero() && resource.data.barberoId == miBarberoId());
+    }
+
+    // ------------------------------ citas ------------------------------
+    match /citas/{citaId} {
+      allow read: if signedIn() && (
+        resource.data.clienteId == request.auth.uid
+        || isAdmin()
+        || (isBarbero() && resource.data.barberoId == miBarberoId()));
+
+      // El cliente crea citas propias, pendientes, futuras, de lunes a sábado, 11:00 a 19:30 en punto o y media.
+      allow create: if signedIn() && emailVerificado()
+        && request.resource.data.clienteId == request.auth.uid
+        && request.resource.data.estado == 'pendiente'
+        && request.resource.data.origen == 'web'
+        && request.resource.data.inicio > request.time
+        && request.resource.data.horaInicio.matches('^[0-9]{2}:(00|30)$')
+        && request.resource.data.horaInicio >= '11:00'
+        && request.resource.data.horaInicio <= '19:30'
+        // Colombia es UTC-5 sin horario de verano: restar 5 h da el día local.
+        && (request.resource.data.inicio - duration.value(5, 'h')).dayOfWeek() != 7
+        && validPhone(request.resource.data.clienteTelefono);
+
+      allow update: if isAdmin()
+        // El cliente solo puede cancelar su cita futura (y debe liberar los cupos en el mismo batch).
+        || (signedIn()
+            && resource.data.clienteId == request.auth.uid
+            && resource.data.estado in ['pendiente', 'confirmada']
+            && resource.data.inicio > request.time
+            && request.resource.data.estado == 'cancelada'
+            && request.resource.data.canceladaPor == 'cliente'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['estado', 'canceladaEn', 'canceladaPor', 'motivoCancelacion', 'updatedAt']))
+        // El barbero gestiona el estado de sus citas.
+        || (isBarbero()
+            && resource.data.barberoId == miBarberoId()
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['estado', 'canceladaEn', 'canceladaPor', 'motivoCancelacion', 'notas', 'updatedAt']));
+
+      allow delete: if isAdmin();
+    }
+
+    // ------------------------------ citas_slots ------------------------------
+    // Un documento por barbero + día + media hora. Su ID es único, así que dos reservas
+    // simultáneas del mismo cupo no pueden crearse (la segunda falla): reemplaza al
+    // constraint de exclusión de Postgres. Se crea en el mismo batch que la cita.
+    match /citas_slots/{slotId} {
+      // Sin datos personales: se lee sin sesión para mostrar las horas ocupadas.
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['barberoId', 'fecha', 'hora', 'citaId'])
+        && slotId == request.resource.data.barberoId + '_' + request.resource.data.fecha + '_' + request.resource.data.hora.replace(':', '')
+        && getAfter(cita(request.resource.data.citaId)).data.clienteId == request.auth.uid
+        && getAfter(cita(request.resource.data.citaId)).data.barberoId == request.resource.data.barberoId
+        && getAfter(cita(request.resource.data.citaId)).data.fecha == request.resource.data.fecha;
+      // Nunca se actualiza: un cupo ocupado no se puede pisar.
+      allow delete: if isAdmin()
+        || (signedIn() && get(cita(resource.data.citaId)).data.clienteId == request.auth.uid);
+    }
+
+    // ------------------------------ resenas ------------------------------
+    // ID = ID de la cita: una reseña por cita.
+    match /resenas/{citaId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.clienteId == request.auth.uid
+        && get(cita(citaId)).data.clienteId == request.auth.uid
+        && get(cita(citaId)).data.estado == 'completada'
+        && request.resource.data.calificacion is int
+        && request.resource.data.calificacion >= 1
+        && request.resource.data.calificacion <= 5;
+      allow update, delete: if isAdmin();
+    }
+
+    // -------- Solo servidor (n8n con cuenta de servicio); el admin puede leer --------
+    match /recordatorios/{id}           { allow read: if isAdmin(); allow write: if false; }
+    match /notificaciones_log/{id}      { allow read: if isAdmin(); allow write: if false; }
+    match /eventos_n8n/{id}             { allow read: if isAdmin(); allow write: if false; }
+    match /conversaciones_whatsapp/{id} { allow read: if isAdmin(); allow write: if false; }
+  }
+}
