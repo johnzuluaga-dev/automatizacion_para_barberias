@@ -16,6 +16,9 @@ vi.mock('../src/lib/citas', () => ({
   getMyAppointments: vi.fn().mockResolvedValue([]),
   getTakenSlots: vi.fn().mockResolvedValue([]),
   cancelByToken: vi.fn(),
+  getMyReviewedIds: vi.fn().mockResolvedValue(new Set()),
+  createReview: vi.fn(),
+  getBarberAppointments: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
@@ -27,9 +30,10 @@ const appointments: Appointment[] = [
     client_phone: '3001112233',
     service: 'Corte Clásico',
     barber: 'Juan Classic',
+    barber_id: 'juan-classic',
     appointment_date: '2026-10-20',
     appointment_time: '11:30',
-    status: 'pending',
+    status: 'pendiente',
     created_at: '2026-10-14T10:00:00Z',
   },
   {
@@ -38,9 +42,10 @@ const appointments: Appointment[] = [
     client_phone: '3004445566',
     service: 'Corte + Barba',
     barber: 'Carlos The Blade',
+    barber_id: 'carlos-the-blade',
     appointment_date: '2026-10-21',
     appointment_time: '15:00',
-    status: 'completed',
+    status: 'completada',
     created_at: '2026-10-14T10:00:00Z',
   },
 ];
@@ -95,7 +100,7 @@ describe('admin', () => {
     const row = (await screen.findByText('Laura Gómez')).closest('tr');
     expect(row).not.toBeNull();
     await user.click(within(row as HTMLElement).getByRole('button', { name: 'Confirmar' }));
-    expect(updateAppointmentStatus).toHaveBeenCalledWith('a1', 'confirmed');
+    expect(updateAppointmentStatus).toHaveBeenCalledWith('a1', 'confirmada', 'admin');
     expect(await screen.findByText('Cita confirmada')).toBeInTheDocument();
   });
 

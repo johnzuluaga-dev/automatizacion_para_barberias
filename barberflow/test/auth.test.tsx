@@ -14,6 +14,9 @@ vi.mock('../src/lib/citas', () => ({
   createAppointment: vi.fn(),
   cancelMyAppointment: vi.fn(),
   cancelByToken: vi.fn(),
+  getMyReviewedIds: vi.fn().mockResolvedValue(new Set()),
+  createReview: vi.fn(),
+  getBarberAppointments: vi.fn().mockResolvedValue([]),
 }));
 
 beforeEach(() => {

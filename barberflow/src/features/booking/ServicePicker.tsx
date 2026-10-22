@@ -1,18 +1,18 @@
 import { Check } from 'lucide-react';
 import { ChoiceGroup } from '@/components/ui/ChoiceGroup';
 import { cn } from '@/lib/utils';
-import { formatPrice, SERVICIOS } from './catalog';
+import { formatPrice, type Service } from './catalog';
 import { StepLegend } from './StepLegend';
 
-const options = SERVICIOS.map((s) => ({ value: s.name, label: `${s.name}, ${formatPrice(s.price)}`, price: s.price }));
-
 interface ServicePickerProps {
+  services: readonly Service[];
   value: string;
   onChange: (value: string) => void;
   error?: string;
 }
 
-export function ServicePicker({ value, onChange, error }: ServicePickerProps) {
+export function ServicePicker({ services, value, onChange, error }: ServicePickerProps) {
+  const options = services.map((s) => ({ value: s.id, label: `${s.name}, ${formatPrice(s.price)}`, name: s.name, price: s.price }));
   return (
     <ChoiceGroup
       id="field-service"
@@ -26,7 +26,7 @@ export function ServicePicker({ value, onChange, error }: ServicePickerProps) {
       optionClassName="min-h-20 items-end justify-between p-4"
       renderOption={(option, checked) => (
         <>
-          <span className="max-w-[12ch] font-display text-lg leading-tight font-semibold">{option.value}</span>
+          <span className="max-w-[12ch] font-display text-lg leading-tight font-semibold">{option.name}</span>
           <span className={cn('tabular text-base font-medium', checked ? 'text-accent' : 'text-muted')}>
             {formatPrice(option.price)}
           </span>

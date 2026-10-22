@@ -16,6 +16,7 @@ const MyAppointmentsPage = lazy(() => import('./pages/MyAppointmentsPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const CancelPage = lazy(() => import('./pages/CancelPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const BarberPage = lazy(() => import('./pages/BarberPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const loadMotionFeatures = () => import('@/lib/motion-features').then((mod) => mod.default);
@@ -47,6 +48,14 @@ export function AppRoutes() {
             element={
               <RequireAuth role="admin">
                 <AdminPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/barbero"
+            element={
+              <RequireAuth role="barbero">
+                <BarberPage />
               </RequireAuth>
             }
           />

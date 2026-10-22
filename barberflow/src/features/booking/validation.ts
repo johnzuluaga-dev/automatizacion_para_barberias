@@ -1,6 +1,7 @@
-import { findService, BARBEROS } from './catalog';
-import { isClosedDay, isPastDay, isPastSlot, TIME_SLOTS } from './schedule';
+import type { Catalog } from './catalog';
+import { isClosedDay, isPastDay, isPastSlot, slotsFor } from './schedule';
 
+/** `service` y `barber` son los IDs del catálogo (servicios/{id}, barberos/{id}). */
 export interface BookingFormValues {
   client_name: string;
   client_phone: string;
@@ -31,24 +32,26 @@ export const FIELD_ORDER: readonly (keyof BookingFormValues)[] = [
   'client_phone',
 ];
 
-export function validateBooking(values: BookingFormValues, now: Date = new Date()): BookingErrors {
+export function validateBooking(values: BookingFormValues, catalog: Catalog, now: Date = new Date()): BookingErrors {
   const errors: BookingErrors = {};
+  const service = catalog.services.find((s) => s.id === values.service);
+  const barber = catalog.barbers.find((b) => b.id === values.barber);
 
-  if (!findService(values.service)) errors.service = 'Elige un servicio.';
-  if (!BARBEROS.includes(values.barber)) errors.barber = 'Elige quién te atiende.';
+  if (!service) errors.service = 'Elige un servicio.';
+  if (!barber || (service && !barber.serviceIds.includes(service.id))) errors.barber = 'Elige quién te atiende.';
 
   if (!values.appointment_date) {
     errors.appointment_date = 'Elige un día.';
   } else if (isPastDay(values.appointment_date, now)) {
     errors.appointment_date = 'Esa fecha ya pasó.';
-  } else if (isClosedDay(values.appointment_date)) {
-    errors.appointment_date = 'Los domingos no abrimos. Elige otro día.';
+  } else if (isClosedDay(values.appointment_date, barber?.schedule)) {
+    errors.appointment_date = 'Ese día no hay atención. Elige otro.';
   }
 
   if (!values.appointment_time) {
     errors.appointment_time = 'Elige una hora.';
-  } else if (!TIME_SLOTS.includes(values.appointment_time)) {
-    errors.appointment_time = 'Elige una hora dentro del horario (11:00 a 19:30).';
+  } else if (!slotsFor(values.appointment_date, barber?.schedule, service?.durationMin).includes(values.appointment_time)) {
+    errors.appointment_time = 'Elige una hora dentro del horario de atención.';
   } else if (values.appointment_date && isPastSlot(values.appointment_date, values.appointment_time, now)) {
     errors.appointment_time = 'Esa hora ya pasó. Elige otra.';
   }

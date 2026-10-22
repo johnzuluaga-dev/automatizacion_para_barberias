@@ -1,17 +1,17 @@
 import { ChoiceGroup } from '@/components/ui/ChoiceGroup';
 import { cn } from '@/lib/utils';
-import { BARBEROS, initials } from './catalog';
+import { initials, type Barber } from './catalog';
 import { StepLegend } from './StepLegend';
 
-const options = BARBEROS.map((name) => ({ value: name, label: name }));
-
 interface BarberPickerProps {
+  barbers: readonly Barber[];
   value: string;
   onChange: (value: string) => void;
   error?: string;
 }
 
-export function BarberPicker({ value, onChange, error }: BarberPickerProps) {
+export function BarberPicker({ barbers, value, onChange, error }: BarberPickerProps) {
+  const options = barbers.map((b) => ({ value: b.id, label: b.name }));
   return (
     <ChoiceGroup
       id="field-barber"
@@ -32,9 +32,9 @@ export function BarberPicker({ value, onChange, error }: BarberPickerProps) {
               checked ? 'bg-accent text-accent-ink' : 'bg-surface-2 text-ink',
             )}
           >
-            {initials(option.value)}
+            {initials(option.label)}
           </span>
-          <span className="font-medium leading-tight">{option.value}</span>
+          <span className="font-medium leading-tight">{option.label}</span>
         </>
       )}
     />

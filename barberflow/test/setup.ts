@@ -16,3 +16,4 @@ configure({ asyncUtilTimeout: 10000 });
 
 // Los módulos que importan Firebase no deben iniciar un proyecto real en las pruebas.
 vi.mock('../src/lib/firebase', () => ({ auth: { currentUser: null }, db: {} }));
+vi.mock('../src/lib/catalogo', () => import('./mocks/catalogo'));

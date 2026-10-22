@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { findService, formatPrice } from './catalog';
+import { formatPrice, type Barber, type Service } from './catalog';
 import { formatLongDate } from './schedule';
 import type { BookingFormValues } from './validation';
 
@@ -26,13 +26,15 @@ export function Perforation({ className }: { className?: string }) {
 
 interface TicketDetailsProps {
   values: BookingFormValues;
+  service?: Service;
+  barber?: Barber;
 }
 
-export function TicketDetails({ values }: TicketDetailsProps) {
+export function TicketDetails({ values, service, barber }: TicketDetailsProps) {
   return (
     <dl className="divide-y divide-line/70">
-      <Row label="Servicio" value={values.service} />
-      <Row label="Barbero" value={values.barber} />
+      <Row label="Servicio" value={service?.name} />
+      <Row label="Barbero" value={barber?.name} />
       <Row label="Día" value={values.appointment_date ? formatLongDate(values.appointment_date) : undefined} />
       <Row label="Hora" value={values.appointment_time} />
     </dl>
@@ -41,6 +43,8 @@ export function TicketDetails({ values }: TicketDetailsProps) {
 
 interface BookingTicketProps {
   values: BookingFormValues;
+  service?: Service;
+  barber?: Barber;
   /** Botón de envío (único en el DOM; se reubica según el ancho). */
   action: ReactNode;
 }
@@ -49,9 +53,8 @@ interface BookingTicketProps {
  * Resumen tipo "ticket". En escritorio queda fijo en la columna derecha;
  * en móvil se convierte en una barra inferior con total y botón.
  */
-export function BookingTicket({ values, action }: BookingTicketProps) {
-  const service = findService(values.service);
-  const compact = [values.service, values.appointment_time].filter(Boolean).join(' · ');
+export function BookingTicket({ values, service, barber, action }: BookingTicketProps) {
+  const compact = [service?.name, values.appointment_time].filter(Boolean).join(' · ');
 
   return (
     <aside
@@ -64,7 +67,7 @@ export function BookingTicket({ values, action }: BookingTicketProps) {
       <div className="hidden lg:block">
         <p className="font-display text-xl font-semibold">Tu cita</p>
         <div className="mt-3">
-          <TicketDetails values={values} />
+          <TicketDetails values={values} service={service} barber={barber} />
         </div>
         <Perforation className="-mx-6" />
       </div>

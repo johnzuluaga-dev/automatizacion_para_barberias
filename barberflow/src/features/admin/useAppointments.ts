@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/toast/toast-context';
-import { getAppointments, updateAppointmentStatus, type Appointment, type AppointmentStatus } from '@/lib/citas';
+import {
+  getAppointments,
+  updateAppointmentStatus,
+  type Appointment,
+  type AppointmentStatus,
+  type StatusActor,
+} from '@/lib/citas';
 import { STATUS_META } from './status';
 
 interface State {
@@ -9,19 +15,26 @@ interface State {
   error: string | null;
 }
 
-export function useAppointments() {
+interface Options {
+  /** Cómo se cargan las citas (por defecto, todas: agenda del admin). */
+  load?: () => Promise<Appointment[]>;
+  /** Quién cambia los estados. */
+  actor?: StatusActor;
+}
+
+export function useAppointments({ load: loader = getAppointments, actor = 'admin' }: Options = {}) {
   const toast = useToast();
   const [state, setState] = useState<State>({ appointments: [], loading: true, error: null });
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const data = await getAppointments();
+      const data = await loader();
       setState({ appointments: data, loading: false, error: null });
     } catch (err) {
       setState((s) => ({ ...s, loading: false, error: err instanceof Error ? err.message : 'Error al cargar citas' }));
     }
-  }, []);
+  }, [loader]);
 
   useEffect(() => {
     void load();
@@ -36,7 +49,7 @@ export function useAppointments() {
     async (appointment: Appointment, status: AppointmentStatus) => {
       setUpdatingId(appointment.id);
       try {
-        await updateAppointmentStatus(appointment.id, status);
+        await updateAppointmentStatus(appointment.id, status, actor);
         setState((s) => ({
           ...s,
           appointments: s.appointments.map((a) => (a.id === appointment.id ? { ...a, status } : a)),
@@ -52,7 +65,7 @@ export function useAppointments() {
         setUpdatingId(null);
       }
     },
-    [toast],
+    [toast, actor],
   );
 
   return { ...state, updatingId, refresh, updateStatus };

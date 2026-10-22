@@ -2,8 +2,8 @@
  * Citas en Firestore. Las consultas viajan con la sesión del usuario: las reglas
  * (firebase/firestore.rules) deciden qué ve cada uno (cliente: las suyas; admin: todas).
  *
- * La interfaz hacia la UI conserva los nombres de campos y estados en inglés
- * (`client_name`, `pending`…); aquí se traducen a los documentos de Firestore.
+ * La interfaz hacia la UI conserva los nombres de campos en inglés (`client_name`…);
+ * aquí se traducen a los documentos de Firestore. Los estados son los mismos de la base.
  */
 import {
   collection,
@@ -13,15 +13,18 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   Timestamp,
   where,
   writeBatch,
   type DocumentData,
 } from 'firebase/firestore';
-import { findService } from '@/features/booking/catalog';
+import { toE164 } from '@/features/auth/validation';
+import type { Barber, Service } from '@/features/booking/catalog';
+import { BOGOTA_OFFSET, slotCells } from '@/features/booking/schedule';
 import { auth, db } from './firebase';
 
-export type AppointmentStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
+export type AppointmentStatus = 'pendiente' | 'confirmada' | 'completada' | 'cancelada' | 'no_asistio';
 
 export interface Appointment {
   id: string;
@@ -29,6 +32,8 @@ export interface Appointment {
   client_phone: string;
   service: string;
   barber: string;
+  /** ID del barbero en el catálogo (barberos/{id}). */
+  barber_id: string;
   appointment_date: string;
   appointment_time: string;
   status: AppointmentStatus;
@@ -40,8 +45,8 @@ export interface Appointment {
 export interface NewAppointment {
   client_name: string;
   client_phone: string;
-  service: string;
-  barber: string;
+  service: Service;
+  barber: Barber;
   appointment_date: string;
   appointment_time: string;
 }
@@ -57,48 +62,9 @@ export class DataError extends Error {
   }
 }
 
-const TO_DB: Record<AppointmentStatus, string> = {
-  pending: 'pendiente',
-  confirmed: 'confirmada',
-  completed: 'completada',
-  cancelled: 'cancelada',
-};
-
-const FROM_DB: Record<string, AppointmentStatus> = {
-  pendiente: 'pending',
-  confirmada: 'confirmed',
-  completada: 'completed',
-  cancelada: 'cancelled',
-  no_asistio: 'cancelled',
-};
-
-const SLOT_MINUTES = 30;
-/** Colombia es UTC-5 todo el año (sin horario de verano). */
-const BOGOTA_OFFSET = '-05:00';
-
-/** "Carlos The Blade" → "carlos-the-blade": los IDs de barberos y servicios del seed. */
-export function slugify(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-function hhmm(minutes: number): string {
-  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-}
-
-/** Horas ("HH:mm") de los cupos de 30 minutos que ocupa una cita. */
-function slotHours(time: string, durationMin: number): string[] {
-  const [h = 0, m = 0] = time.split(':').map(Number);
-  return Array.from({ length: Math.ceil(durationMin / SLOT_MINUTES) }, (_, i) => hhmm(h * 60 + m + i * SLOT_MINUTES));
-}
-
 /** IDs de los cupos: barbero + día + hora. Un ID repetido hace fallar la reserva (doble reserva). */
 function slotIdsFor(barberId: string, date: string, time: string, durationMin: number): string[] {
-  return slotHours(time, durationMin).map((hour) => `${barberId}_${date}_${hour.replace(':', '')}`);
+  return slotCells(time, durationMin).map((cell) => `${barberId}_${date}_${cell.replace(':', '')}`);
 }
 
 function fail(error: unknown, fallback: string): never {
@@ -118,9 +84,10 @@ function toAppointment(id: string, data: DocumentData): Appointment {
     client_phone: data.clienteTelefono ?? '',
     service: servicios.map((s) => s.nombre).join(' + '),
     barber: data.barberoNombre ?? '',
+    barber_id: data.barberoId ?? '',
     appointment_date: data.fecha,
     appointment_time: data.horaInicio,
-    status: FROM_DB[data.estado] ?? 'pending',
+    status: data.estado,
     created_at: createdAt,
     cancel_token: data.cancelToken,
     user_id: data.clienteId ?? null,
@@ -138,20 +105,33 @@ export async function getAppointments(): Promise<Appointment[]> {
   }
 }
 
-export async function updateAppointmentStatus(id: string, status: AppointmentStatus): Promise<void> {
+/** Quién cambia el estado (queda en `canceladaPor` si cancela). */
+export type StatusActor = 'admin' | 'barbero';
+
+/** Citas de un barbero, la más reciente primero (para su agenda). */
+export async function getBarberAppointments(barberoId: string): Promise<Appointment[]> {
+  try {
+    const snap = await getDocs(query(collection(db, 'citas'), where('barberoId', '==', barberoId), orderBy('inicio', 'asc')));
+    return snap.docs.map((d) => toAppointment(d.id, d.data())).reverse();
+  } catch (error) {
+    fail(error, 'No pudimos cargar tu agenda.');
+  }
+}
+
+export async function updateAppointmentStatus(id: string, status: AppointmentStatus, by: StatusActor = 'admin'): Promise<void> {
   try {
     const ref = doc(db, 'citas', id);
     const batch = writeBatch(db);
-    if (status === 'cancelled') {
+    if (status === 'cancelada') {
       batch.update(ref, {
-        estado: TO_DB.cancelled,
+        estado: 'cancelada',
         canceladaEn: serverTimestamp(),
-        canceladaPor: 'admin',
+        canceladaPor: by,
         updatedAt: serverTimestamp(),
       });
       await deleteSlots(batch, id);
     } else {
-      batch.update(ref, { estado: TO_DB[status], updatedAt: serverTimestamp() });
+      batch.update(ref, { estado: status, updatedAt: serverTimestamp() });
     }
     await batch.commit();
   } catch (error) {
@@ -181,13 +161,11 @@ async function deleteSlots(batch: ReturnType<typeof writeBatch>, citaId: string)
 
 /** Crea la cita del usuario con sesión; queda "pendiente" hasta que el admin la confirme. */
 export async function createAppointment(input: NewAppointment, userId: string): Promise<Appointment> {
-  const service = findService(input.service);
-  if (!service) throw new DataError('Elige un servicio válido.');
-
-  const barberoId = slugify(input.barber);
+  const { service, barber } = input;
+  const barberoId = barber.id;
   const slotIds = slotIdsFor(barberoId, input.appointment_date, input.appointment_time, service.durationMin);
-  const taken = new Set(await getTakenSlots(input.barber, input.appointment_date));
-  if (slotHours(input.appointment_time, service.durationMin).some((hour) => taken.has(hour))) {
+  const taken = new Set(await getTakenSlots(barberoId, input.appointment_date));
+  if (slotCells(input.appointment_time, service.durationMin).some((cell) => taken.has(cell))) {
     throw new DataError('Esa hora acaba de ocuparse. Elige otra.', 'slot_taken');
   }
 
@@ -201,18 +179,18 @@ export async function createAppointment(input: NewAppointment, userId: string): 
     batch.set(citaRef, {
       clienteId: userId,
       clienteNombre: input.client_name,
-      clienteTelefono: input.client_phone,
+      clienteTelefono: toE164(input.client_phone),
       barberoId,
-      barberoNombre: input.barber,
+      barberoNombre: barber.name,
       sedeId: 'sede-principal',
       fecha: input.appointment_date,
       horaInicio: input.appointment_time,
       inicio: Timestamp.fromDate(inicio),
       fin: Timestamp.fromDate(fin),
-      estado: TO_DB.pending,
+      estado: 'pendiente',
       notas: '',
       servicios: [
-        { servicioId: slugify(service.name), nombre: service.name, precio: service.price, duracionMin: service.durationMin },
+        { servicioId: service.id, nombre: service.name, precio: service.price, duracionMin: service.durationMin },
       ],
       precioTotal: service.price,
       origen: 'web',
@@ -221,7 +199,7 @@ export async function createAppointment(input: NewAppointment, userId: string): 
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    const horas = slotHours(input.appointment_time, service.durationMin);
+    const horas = slotCells(input.appointment_time, service.durationMin);
     slotIds.forEach((slotId, i) => {
       batch.set(doc(db, 'citas_slots', slotId), {
         barberoId,
@@ -244,10 +222,11 @@ export async function createAppointment(input: NewAppointment, userId: string): 
     client_name: input.client_name,
     client_phone: input.client_phone,
     service: service.name,
-    barber: input.barber,
+    barber: barber.name,
+    barber_id: barber.id,
     appointment_date: input.appointment_date,
     appointment_time: input.appointment_time,
-    status: 'pending',
+    status: 'pendiente',
     created_at: new Date().toISOString(),
     cancel_token: cancelToken,
     user_id: userId,
@@ -266,10 +245,10 @@ export async function getMyAppointments(): Promise<Appointment[]> {
 }
 
 /** Horas ya tomadas para un barbero y día (los cupos no llevan datos de las personas). */
-export async function getTakenSlots(barber: string, date: string): Promise<string[]> {
+export async function getTakenSlots(barberId: string, date: string): Promise<string[]> {
   try {
     const snap = await getDocs(
-      query(collection(db, 'citas_slots'), where('barberoId', '==', slugify(barber)), where('fecha', '==', date)),
+      query(collection(db, 'citas_slots'), where('barberoId', '==', barberId), where('fecha', '==', date)),
     );
     return snap.docs.map((d) => d.data().hora as string);
   } catch {
@@ -288,7 +267,7 @@ export async function cancelMyAppointment(id: string): Promise<void> {
     }
     const batch = writeBatch(db);
     batch.update(ref, {
-      estado: TO_DB.cancelled,
+      estado: 'cancelada',
       canceladaEn: serverTimestamp(),
       canceladaPor: 'cliente',
       updatedAt: serverTimestamp(),
@@ -324,4 +303,36 @@ export async function cancelByToken(token: string): Promise<boolean> {
   if (!response.ok) throw new DataError('No pudimos cancelar la cita.');
   const body = (await response.json().catch(() => ({}))) as { cancelada?: boolean };
   return body.cancelada !== false;
+}
+
+/* ------------------------------- Reseñas ------------------------------ */
+
+/** IDs de las citas que la persona ya calificó (resenas/{citaId}). */
+export async function getMyReviewedIds(): Promise<Set<string>> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return new Set();
+  try {
+    const snap = await getDocs(query(collection(db, 'resenas'), where('clienteId', '==', uid)));
+    return new Set(snap.docs.map((d) => d.id));
+  } catch {
+    return new Set();
+  }
+}
+
+/** Califica una cita completada (1 a 5). El ID de la reseña es el de la cita: una por cita. */
+export async function createReview(appointment: Appointment, rating: number, comment: string): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new DataError('Ingresa de nuevo para calificar.');
+  try {
+    await setDoc(doc(db, 'resenas', appointment.id), {
+      citaId: appointment.id,
+      barberoId: appointment.barber_id,
+      clienteId: uid,
+      calificacion: rating,
+      comentario: comment.trim(),
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    fail(error, 'No pudimos guardar tu calificación.');
+  }
 }

@@ -1,21 +1,31 @@
 export interface Service {
+  id: string;
   name: string;
   price: number;
   /** Minutos que ocupa en la agenda (múltiplo de 30). */
   durationMin: number;
 }
 
-export const SERVICIOS: readonly Service[] = [
-  { name: 'Corte Clásico', price: 15, durationMin: 30 },
-  { name: 'Corte + Barba', price: 25, durationMin: 60 },
-  { name: 'Perfilado de Barba', price: 10, durationMin: 30 },
-  { name: 'Tratamiento Facial', price: 30, durationMin: 60 },
-];
+/** Tramo de atención de un día, p. ej. { desde: '11:00', hasta: '20:00' }. */
+export interface TimeRange {
+  desde: string;
+  hasta: string;
+}
 
-export const BARBEROS: readonly string[] = ['Carlos The Blade', 'Andrés Estilo', 'Juan Classic'];
+/** Horario por día de la semana (0 = domingo … 6 = sábado); un día sin tramos está cerrado. */
+export type WeeklySchedule = Record<string, TimeRange[]>;
 
-export function findService(name: string): Service | undefined {
-  return SERVICIOS.find((s) => s.name === name);
+export interface Barber {
+  id: string;
+  name: string;
+  /** IDs de los servicios que ofrece. */
+  serviceIds: string[];
+  schedule: WeeklySchedule;
+}
+
+export interface Catalog {
+  services: Service[];
+  barbers: Barber[];
 }
 
 export function formatPrice(price: number): string {

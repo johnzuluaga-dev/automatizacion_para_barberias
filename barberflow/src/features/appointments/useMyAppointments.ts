@@ -38,7 +38,7 @@ export function useMyAppointments() {
         await cancelMyAppointment(appointment.id);
         setState((s) => ({
           ...s,
-          appointments: s.appointments.map((a) => (a.id === appointment.id ? { ...a, status: 'cancelled' } : a)),
+          appointments: s.appointments.map((a) => (a.id === appointment.id ? { ...a, status: 'cancelada' } : a)),
         }));
         toast({ tone: 'success', title: 'Cita cancelada', description: `${appointment.service} · ${appointment.appointment_time}` });
       } catch (err) {

@@ -1,5 +1,3 @@
-
-
 # 💈 BarberFlow – Automatización para Barberías
 
 ## 📌 Descripción del Proyecto

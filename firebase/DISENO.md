@@ -16,7 +16,7 @@ recordar antes de la cita y avisar cancelaciones. Después se agregará un chatb
 |---|---|---|
 | `perfiles/{uid}` | Nombre, teléfono E.164, avatar, rol (copia informativa; la autoridad es el claim del token) | `uid` = ID de Firebase Auth |
 | `sedes/{id}` | Sede(s) del negocio (una por ahora) | la referencian barberos y citas |
-| `barberos/{id}` | Nombre, foto, activo, **servicioIds[]** (= barbero_servicios) y **horarioSemanal** (= horarios_barbero; mapa día→lista de `{desde, hasta}`, sin arreglos anidados), embebidos | `sedeId`, `perfilId` (si tiene login) |
+| `barberos/{id}` | Nombre, foto, activo, **servicioIds[]** (= barbero_servicios) y **orden** (para listar), **horarioSemanal** (= horarios_barbero; mapa día→lista de `{desde, hasta}`, sin arreglos anidados), embebidos | `sedeId`, `perfilId` (si tiene login) |
 | `servicios/{id}` | Nombre, duración, precio | referenciado por barberos y citas |
 | `bloqueos_barbero/{id}` | Vacaciones, descansos, días libres (`inicio`, `fin`, `motivo`) | `barberoId` |
 | `citas/{id}` | La reserva: cliente, barbero, sede, `inicio`/`fin` (Timestamp), estado, **servicios[]** embebidos con precio congelado (= cita_servicios), cancelación | `clienteId` (vacío si vino del chatbot), `barberoId`, `sedeId` |

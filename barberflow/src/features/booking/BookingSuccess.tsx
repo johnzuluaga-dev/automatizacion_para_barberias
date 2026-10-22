@@ -4,18 +4,19 @@ import { Link } from 'react-router';
 import { CalendarDays, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { buttonStyles } from '@/components/ui/button-styles';
-import { findService, formatPrice } from './catalog';
+import { formatPrice, type Barber, type Service } from './catalog';
 import { Perforation, TicketDetails } from './BookingTicket';
 import type { BookingFormValues } from './validation';
 
 interface BookingSuccessProps {
   values: BookingFormValues;
+  service?: Service;
+  barber?: Barber;
   onReset: () => void;
 }
 
-export function BookingSuccess({ values, onReset }: BookingSuccessProps) {
+export function BookingSuccess({ values, service, barber, onReset }: BookingSuccessProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const service = findService(values.service);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -48,7 +49,7 @@ export function BookingSuccess({ values, onReset }: BookingSuccessProps) {
 
         <Perforation className="-mx-6 sm:-mx-8" />
 
-        <TicketDetails values={values} />
+        <TicketDetails values={values} service={service} barber={barber} />
         <div className="mt-2 flex items-baseline justify-between border-t border-line pt-3">
           <span className="text-sm text-muted">Total</span>
           <span className="tabular font-display text-2xl font-bold">{service ? formatPrice(service.price) : '$0'}</span>

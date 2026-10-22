@@ -5,32 +5,17 @@
 
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
-export interface BookingData {
-  client_name: string;
-  client_phone: string;
-  service: string;
-  barber: string;
-  appointment_date: string;
-  appointment_time: string;
-  price?: number;
-}
-
 /** Respuesta del webhook; n8n puede devolver cualquier JSON o un cuerpo vacío. */
 export type N8nResponse = Record<string, unknown>;
 
-export async function sendBookingToN8n(bookingData: BookingData): Promise<N8nResponse> {
+/** Avisa que hay una cita nueva; n8n la lee de Firestore por su ID. */
+export async function sendBookingToN8n(citaId: string): Promise<N8nResponse> {
   if (!N8N_WEBHOOK_URL) throw new Error('n8n no está configurado');
 
   try {
     const payload = {
       tipo_evento: 'nueva_cita',
-      client_name: bookingData.client_name,
-      client_phone: bookingData.client_phone,
-      service: bookingData.service,
-      barber: bookingData.barber,
-      appointment_date: bookingData.appointment_date,
-      appointment_time: bookingData.appointment_time,
-      price: bookingData.price,
+      citaId,
       timestamp: new Date().toISOString(),
       source: 'BarberFlow Web',
     };

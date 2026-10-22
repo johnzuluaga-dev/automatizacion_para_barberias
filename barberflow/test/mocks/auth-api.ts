@@ -12,7 +12,7 @@ let profile: Profile | null = null;
 const listeners = new Set<Listener>();
 
 export function setTestSession(
-  user: { id?: string; email?: string; name?: string; role?: Role; emailVerified?: boolean } | null,
+  user: { id?: string; email?: string; name?: string; role?: Role; emailVerified?: boolean; barberoId?: string } | null,
 ) {
   if (!user) {
     current = null;
@@ -24,6 +24,7 @@ export function setTestSession(
       email: user.email ?? 'cliente@correo.com',
       emailVerified: user.emailVerified ?? true,
       role: user.role ?? 'cliente',
+      barberoId: user.barberoId,
     };
     profile = { id, full_name: user.name ?? 'Juan Pérez', phone: '3001234567' };
   }

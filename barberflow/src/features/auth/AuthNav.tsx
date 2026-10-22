@@ -52,6 +52,13 @@ export function AuthNav() {
         <span className="hidden sm:inline">Mis citas</span>
         <span className="sr-only sm:hidden">Mis citas</span>
       </NavLink>
+      {role === 'barbero' && (
+        <NavLink to="/barbero" className={linkClass}>
+          <LayoutDashboard aria-hidden className="size-4" />
+          <span className="hidden sm:inline">Mi agenda</span>
+          <span className="sr-only sm:hidden">Mi agenda</span>
+        </NavLink>
+      )}
       {role === 'admin' && (
         <NavLink to="/admin" className={linkClass}>
           <LayoutDashboard aria-hidden className="size-4" />

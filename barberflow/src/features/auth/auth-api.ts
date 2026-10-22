@@ -24,6 +24,8 @@ export interface AuthUser {
   email: string;
   emailVerified: boolean;
   role: Role;
+  /** Solo para barberos: el barbero del catálogo que atienden (claim `barberoId`). */
+  barberoId?: string;
 }
 
 export interface Profile {
@@ -54,13 +56,15 @@ async function run<T>(fn: () => Promise<T>): Promise<T> {
 
 async function toAuthUser(user: User): Promise<AuthUser> {
   let role: Role = 'cliente';
+  let barberoId: string | undefined;
   try {
-    const claim = (await user.getIdTokenResult()).claims.rol;
-    if (claim === 'admin' || claim === 'barbero') role = claim;
+    const { claims } = await user.getIdTokenResult();
+    if (claims.rol === 'admin' || claims.rol === 'barbero') role = claims.rol;
+    if (role === 'barbero' && typeof claims.barberoId === 'string') barberoId = claims.barberoId;
   } catch {
     // Sin token legible se trata como cliente; las reglas de Firestore mandan igual.
   }
-  return { id: user.uid, email: user.email ?? '', emailVerified: user.emailVerified, role };
+  return { id: user.uid, email: user.email ?? '', emailVerified: user.emailVerified, role, barberoId };
 }
 
 const manualRefresh = new Set<() => void>();

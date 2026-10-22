@@ -2,8 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { AnimatePresence, m } from 'motion/react';
 import { LogIn, Phone, User } from 'lucide-react';
+import { RotateCw } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { TextField } from '@/components/ui/TextField';
 import { useAuth } from '@/features/auth/auth-context';
 import { config } from '@/lib/config';
@@ -13,12 +15,12 @@ import { BarberPicker } from './BarberPicker';
 import { BookingHero } from './BookingHero';
 import { BookingSuccess } from './BookingSuccess';
 import { BookingTicket } from './BookingTicket';
-import { findService } from './catalog';
 import { DateTimePicker } from './DateTimePicker';
 import { saveDraft, takeDraft } from './draft';
-import { isPastSlot } from './schedule';
+import { isPastSlot, slotCells } from './schedule';
 import { ServicePicker } from './ServicePicker';
 import { StepLegend } from './StepLegend';
+import { useCatalog } from './useCatalog';
 import { useTakenSlots } from './useTakenSlots';
 import { EMPTY_BOOKING, FIELD_ORDER, validateBooking, type BookingErrors, type BookingFormValues } from './validation';
 
@@ -37,7 +39,14 @@ export function BookingForm() {
   const [attempted, setAttempted] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { taken, refresh: refreshTaken } = useTakenSlots(values.barber, values.appointment_date);
+  const { catalog, error: catalogError, loading: catalogLoading, retry: retryCatalog } = useCatalog();
+  const { taken, blocks, refresh: refreshTaken } = useTakenSlots(values.barber, values.appointment_date);
+
+  const services = catalog?.services ?? [];
+  const barbers = catalog?.barbers ?? [];
+  const service = services.find((s) => s.id === values.service);
+  const barber = barbers.find((b) => b.id === values.barber);
+  const barbersForService = service ? barbers.filter((b) => b.serviceIds.includes(service.id)) : barbers;
 
   const signedIn = Boolean(user);
   const effective: BookingFormValues = {
@@ -47,8 +56,8 @@ export function BookingForm() {
   };
 
   function validate(v: BookingFormValues): BookingErrors {
-    const found = validateBooking(v);
-    if (v.appointment_time && taken.has(v.appointment_time)) found.appointment_time = 'Esa hora ya está ocupada. Elige otra.';
+    const found = validateBooking(v, catalog ?? { services: [], barbers: [] });
+    if (v.appointment_time && slotCells(v.appointment_time, service?.durationMin).some((cell) => taken.has(cell))) found.appointment_time = 'Esa hora ya está ocupada. Elige otra.';
     if (!signedIn) {
       delete found.client_name;
       delete found.client_phone;
@@ -58,6 +67,11 @@ export function BookingForm() {
 
   function update<K extends keyof BookingFormValues>(field: K, value: BookingFormValues[K]) {
     const next = { ...effective, [field]: value };
+    // Si el barbero elegido no ofrece el nuevo servicio, se descarta la elección.
+    if (field === 'service' && next.barber) {
+      const offers = barbers.find((b) => b.id === next.barber)?.serviceIds.includes(value as string);
+      if (!offers) next.barber = '';
+    }
     // Si el nuevo día deja la hora elegida en el pasado, se descarta la hora.
     if (field === 'appointment_date' && next.appointment_time && isPastSlot(next.appointment_date, next.appointment_time)) {
       next.appointment_time = '';
@@ -96,18 +110,21 @@ export function BookingForm() {
 
     setStatus('loading');
     try {
-      const booking = {
-        client_name: effective.client_name.trim(),
-        client_phone: effective.client_phone.trim(),
-        service: effective.service,
-        barber: effective.barber,
-        appointment_date: effective.appointment_date,
-        appointment_time: effective.appointment_time,
-      };
-      await createAppointment(booking, user.id);
+      if (!service || !barber) return;
+      const created = await createAppointment(
+        {
+          client_name: effective.client_name.trim(),
+          client_phone: effective.client_phone.trim(),
+          service,
+          barber,
+          appointment_date: effective.appointment_date,
+          appointment_time: effective.appointment_time,
+        },
+        user.id,
+      );
       if (config.n8nEnabled) {
-        // Aviso opcional (mismo payload de siempre); si falla, la cita ya está guardada.
-        void sendBookingToN8n({ ...booking, price: findService(booking.service)?.price ?? 0 }).catch(() => undefined);
+        // Aviso opcional: n8n lee la cita por su ID; si falla, la cita ya está guardada.
+        void sendBookingToN8n(created.id).catch(() => undefined);
       }
       setValues(effective);
       setStatus('success');
@@ -132,7 +149,7 @@ export function BookingForm() {
   }
 
   if (status === 'success') {
-    return <BookingSuccess values={values} onReset={reset} />;
+    return <BookingSuccess values={values} service={service} barber={barber} onReset={reset} />;
   }
 
   const errorCount = Object.keys(errors).length;
@@ -164,8 +181,31 @@ export function BookingForm() {
           )}
         </AnimatePresence>
 
-        <ServicePicker value={values.service} onChange={(v) => update('service', v)} error={errors.service} />
-        <BarberPicker value={values.barber} onChange={(v) => update('barber', v)} error={errors.barber} />
+        {catalogLoading && (
+          <div role="status" aria-label="Cargando servicios y barberos" className="flex flex-col gap-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        )}
+        {catalogError && (
+          <Alert
+            tone="danger"
+            title="No pudimos cargar el catálogo"
+            action={
+              <Button size="sm" variant="secondary" icon={<RotateCw aria-hidden className="size-4" />} onClick={retryCatalog}>
+                Reintentar
+              </Button>
+            }
+          >
+            {catalogError}
+          </Alert>
+        )}
+        {catalog && (
+          <>
+            <ServicePicker services={services} value={values.service} onChange={(v) => update('service', v)} error={errors.service} />
+            <BarberPicker barbers={barbersForService} value={values.barber} onChange={(v) => update('barber', v)} error={errors.barber} />
+          </>
+        )}
         <DateTimePicker
           date={values.appointment_date}
           time={values.appointment_time}
@@ -174,6 +214,9 @@ export function BookingForm() {
           dateError={errors.appointment_date}
           timeError={errors.appointment_time}
           takenSlots={taken}
+          schedule={barber?.schedule}
+          durationMin={service?.durationMin}
+          blocks={blocks}
         />
 
         <fieldset className="min-w-0">
@@ -227,12 +270,14 @@ export function BookingForm() {
           )}
         </fieldset>
 
-        <p className="text-sm text-muted">* No se agendan citas los domingos.</p>
+        <p className="text-sm text-muted">* Solo se agenda dentro del horario de atención de cada barbero.</p>
       </div>
 
       <div className="lg:row-span-1">
         <BookingTicket
           values={effective}
+          service={service}
+          barber={barber}
           action={
             signedIn || authLoading ? (
               <Button type="submit" size="lg" className="w-full" loading={status === 'loading'} loadingText="Agendando..." disabled={authLoading}>

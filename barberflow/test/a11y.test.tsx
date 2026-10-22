@@ -12,6 +12,7 @@ vi.mock('../src/lib/citas', () => ({
   updateAppointmentStatus: vi.fn(),
   getMyAppointments: vi.fn().mockResolvedValue([]),
   getTakenSlots: vi.fn().mockResolvedValue([]),
+  getMyReviewedIds: vi.fn().mockResolvedValue(new Set()),
 }));
 vi.mock('../src/features/auth/auth-api', () => import('./mocks/auth-api'));
 
@@ -38,9 +39,10 @@ beforeEach(() => {
       client_phone: '3001112233',
       service: 'Corte Clásico',
       barber: 'Juan Classic',
+      barber_id: 'juan-classic',
       appointment_date: '2026-10-20',
       appointment_time: '11:30',
-      status: 'pending',
+      status: 'pendiente',
       created_at: '',
     },
   ]);

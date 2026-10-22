@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CalendarDays, Check, CheckCheck, RotateCw, X } from 'lucide-react';
+import { CalendarDays, Check, CheckCheck, RotateCw, UserX, X } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -17,10 +17,11 @@ type Filter = 'all' | AppointmentStatus;
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todas' },
-  { value: 'pending', label: 'Pendientes' },
-  { value: 'confirmed', label: 'Confirmadas' },
-  { value: 'completed', label: 'Completadas' },
-  { value: 'cancelled', label: 'Canceladas' },
+  { value: 'pendiente', label: 'Pendientes' },
+  { value: 'confirmada', label: 'Confirmadas' },
+  { value: 'completada', label: 'Completadas' },
+  { value: 'cancelada', label: 'Canceladas' },
+  { value: 'no_asistio', label: 'No asistió' },
 ];
 
 function formatDay(iso: string) {
@@ -46,7 +47,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
   );
 
   const counts = useMemo(() => {
-    const c: Record<Filter, number> = { all: appointments.length, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+    const c: Record<Filter, number> = { all: appointments.length, pendiente: 0, confirmada: 0, completada: 0, cancelada: 0, no_asistio: 0 };
     for (const a of appointments) c[a.status] += 1;
     return c;
   }, [appointments]);
@@ -189,13 +190,18 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
                         ) : (
                           <>
                             {actions.confirm && (
-                              <Button size="sm" variant="secondary" icon={<Check aria-hidden className="size-4" />} onClick={() => onUpdateStatus(apt, 'confirmed')}>
+                              <Button size="sm" variant="secondary" icon={<Check aria-hidden className="size-4" />} onClick={() => onUpdateStatus(apt, 'confirmada')}>
                                 Confirmar
                               </Button>
                             )}
                             {actions.complete && (
-                              <Button size="sm" variant="secondary" icon={<CheckCheck aria-hidden className="size-4" />} onClick={() => onUpdateStatus(apt, 'completed')}>
+                              <Button size="sm" variant="secondary" icon={<CheckCheck aria-hidden className="size-4" />} onClick={() => onUpdateStatus(apt, 'completada')}>
                                 Completar
+                              </Button>
+                            )}
+                            {actions.noShow && (
+                              <Button size="sm" variant="ghost" icon={<UserX aria-hidden className="size-4" />} onClick={() => onUpdateStatus(apt, 'no_asistio')}>
+                                No asistió
                               </Button>
                             )}
                             {actions.cancel && (
@@ -238,7 +244,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
             <Button
               variant="danger"
               onClick={() => {
-                if (toCancel) onUpdateStatus(toCancel, 'cancelled');
+                if (toCancel) onUpdateStatus(toCancel, 'cancelada');
                 setToCancel(null);
               }}
             >

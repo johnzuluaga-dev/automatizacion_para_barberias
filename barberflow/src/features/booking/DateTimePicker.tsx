@@ -5,7 +5,9 @@ import { CalendarPlus } from 'lucide-react';
 import { ChoiceGroup } from '@/components/ui/ChoiceGroup';
 import { inputStyles } from '@/components/ui/TextField';
 import { cn } from '@/lib/utils';
-import { fromIsoDate, isClosedDay, isPastSlot, TIME_SLOTS, toIsoDate, upcomingDays } from './schedule';
+import type { Block } from '@/lib/catalogo';
+import type { WeeklySchedule } from './catalog';
+import { fromIsoDate, isClosedDay, isPastSlot, SLOT_MINUTES, slotCells, slotStart, slotsFor, toIsoDate, upcomingDays } from './schedule';
 import { StepLegend } from './StepLegend';
 
 const VISIBLE_DAYS = 21;
@@ -19,6 +21,12 @@ interface DateTimePickerProps {
   timeError?: string;
   /** Horas ya reservadas para el barbero y día elegidos. */
   takenSlots?: ReadonlySet<string>;
+  /** Horario del barbero elegido (sin barbero, el horario general). */
+  schedule?: WeeklySchedule;
+  /** Minutos que ocupa el servicio elegido. */
+  durationMin?: number;
+  /** Vacaciones y descansos del barbero. */
+  blocks?: readonly Block[];
 }
 
 export function DateTimePicker({
@@ -29,12 +37,15 @@ export function DateTimePicker({
   dateError,
   timeError,
   takenSlots,
+  schedule,
+  durationMin = SLOT_MINUTES,
+  blocks = [],
 }: DateTimePickerProps) {
   const [now] = useState(() => new Date());
   const today = toIsoDate(now);
 
   const days = useMemo(() => {
-    const list = upcomingDays(VISIBLE_DAYS, now).map((d) => ({
+    const list = upcomingDays(VISIBLE_DAYS, now, schedule).map((d) => ({
       value: d.iso,
       label: `${format(d.date, "EEEE d 'de' MMMM", { locale: es })}${d.closed ? ', cerrado' : ''}`,
       disabled: d.closed,
@@ -42,14 +53,17 @@ export function DateTimePicker({
       closed: d.closed,
     }));
     return list;
-  }, [now]);
+  }, [now, schedule]);
 
   const lastVisible = days[days.length - 1]?.value ?? today;
   const isFarDate = Boolean(date) && date > lastVisible;
 
-  const slots = TIME_SLOTS.map((slot) => {
+  const slots = slotsFor(date || (days.find((d) => !d.closed)?.value ?? today), schedule, durationMin).map((slot) => {
     const past = Boolean(date) && isPastSlot(date, slot, now);
-    const taken = !past && Boolean(takenSlots?.has(slot));
+    const start = date ? slotStart(date, slot) : null;
+    const end = start ? new Date(start.getTime() + durationMin * 60_000) : null;
+    const blocked = Boolean(start && end && blocks.some((b) => b.inicio < end && b.fin > start));
+    const taken = !past && (blocked || slotCells(slot, durationMin).some((cell) => takenSlots?.has(cell)));
     return { value: slot, label: taken ? `${slot}, ocupada` : slot, disabled: !date || past || taken, past: past || taken };
   });
 
@@ -58,7 +72,7 @@ export function DateTimePicker({
       <ChoiceGroup
         id="field-appointment_date"
         name="appointment_date"
-        legend={<StepLegend step={3} title="Día" aside="Lun a Sáb · 11:00–20:00" />}
+        legend={<StepLegend step={3} title="Día" />}
         options={days}
         value={date}
         onChange={onDateChange}
@@ -93,7 +107,7 @@ export function DateTimePicker({
             {isFarDate && (
               <span className="text-ink">
                 {format(fromIsoDate(date), "EEEE d 'de' MMMM", { locale: es })}
-                {isClosedDay(date) && ' · cerrado'}
+                {isClosedDay(date, schedule) && ' · cerrado'}
               </span>
             )}
           </div>

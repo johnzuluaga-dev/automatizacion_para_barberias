@@ -95,6 +95,7 @@ service cloud.firestore {
         && getAfter(cita(request.resource.data.citaId)).data.fecha == request.resource.data.fecha;
       // Nunca se actualiza: un cupo ocupado no se puede pisar.
       allow delete: if isAdmin()
+        || (isBarbero() && get(cita(resource.data.citaId)).data.barberoId == miBarberoId())
         || (signedIn() && get(cita(resource.data.citaId)).data.clienteId == request.auth.uid);
     }
 

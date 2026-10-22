@@ -17,6 +17,7 @@ vi.mock('../src/lib/citas', async () => {
     getTakenSlots: vi.fn(),
     getMyAppointments: vi.fn().mockResolvedValue([]),
     getAppointments: vi.fn().mockResolvedValue([]),
+    getMyReviewedIds: vi.fn().mockResolvedValue(new Set()),
   };
 });
 
@@ -29,8 +30,11 @@ beforeEach(() => {
   api.resetAuthMock();
   vi.mocked(createAppointment).mockReset().mockImplementation(async (input) => ({
     ...input,
+    service: input.service.name,
+    barber: input.barber.name,
+    barber_id: input.barber.id,
     id: 'nueva',
-    status: 'pending',
+    status: 'pendiente',
     created_at: '',
   }));
   vi.mocked(getTakenSlots).mockReset().mockResolvedValue([]);
@@ -109,8 +113,8 @@ describe('reserva con sesión', () => {
       {
         client_name: 'Laura Gómez',
         client_phone: '3001234567',
-        service: 'Corte + Barba',
-        barber: 'Andrés Estilo',
+        service: expect.objectContaining({ id: 'corte-barba', durationMin: 60 }),
+        barber: expect.objectContaining({ id: 'andres-estilo', name: 'Andrés Estilo' }),
         appointment_date: '2026-10-15',
         appointment_time: '16:30',
       },
@@ -139,7 +143,7 @@ describe('reserva con sesión', () => {
     await user.click(await screen.findByRole('radio', { name: 'Andrés Estilo' }));
     await user.click(screen.getByRole('radio', { name: /jueves 15 de octubre/i }));
     expect(await screen.findByRole('radio', { name: '16:30, ocupada' })).toBeDisabled();
-    expect(getTakenSlots).toHaveBeenCalledWith('Andrés Estilo', '2026-10-15');
+    expect(getTakenSlots).toHaveBeenCalledWith('andres-estilo', '2026-10-15');
   });
 
   test('si otra persona toma la hora al mismo tiempo, lo explica', async () => {
