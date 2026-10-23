@@ -2,7 +2,7 @@
 
 ## 1. Introducción
 
-Este documento describe la arquitectura del sistema **BarberFlow**, una solución de automatización diseñada para optimizar la gestión de citas en barberías mediante flujos de trabajo automatizados.
+Este documento describe la arquitectura del sistema *BarberFlow*, una solución de automatización diseñada para optimizar la gestión de citas en barberías mediante flujos de trabajo automatizados.
 
 La arquitectura del sistema permite gestionar reservas, notificaciones y análisis de datos utilizando herramientas modernas de automatización e integración de APIs.
 
@@ -10,7 +10,7 @@ La arquitectura del sistema permite gestionar reservas, notificaciones y anális
 
 # 2. Tipo de Arquitectura
 
-BarberFlow utiliza una **arquitectura orientada a eventos (Event Driven Architecture)**.
+BarberFlow utiliza una *arquitectura orientada a eventos (Event Driven Architecture)*.
 
 En este modelo, los procesos del sistema se ejecutan cuando ocurre un evento específico, por ejemplo:
 
@@ -32,59 +32,91 @@ El cliente es el usuario que desea reservar un servicio de barbería.
 
 Funciones del cliente:
 
+* registrarse e iniciar sesión
 * reservar citas
 * seleccionar horario disponible
+* ver sus citas
 * cancelar citas
+* calificar el servicio después de la cita
 * recibir notificaciones
 
 ---
 
-## 3.2 Frontend
+## 3.2 Barbero
 
-El frontend corresponde a la interfaz web donde los clientes interactúan con el sistema.
+El barbero es el empleado que atiende las citas.
 
-Funciones del frontend:
+Funciones del barbero:
 
-* mostrar disponibilidad de horarios
-* capturar información del cliente
-* enviar solicitudes de citas al backend
-
-El frontend puede desplegarse utilizando **Vercel**.
+* iniciar sesión con su cuenta
+* ver solo sus citas
+* cambiar el estado de sus citas
 
 ---
 
-## 3.3 Backend
+## 3.3 Administrador
 
-El backend del sistema está construido utilizando **n8n**, que funciona como un motor de automatización.
+El administrador es quien gestiona la barbería.
+
+Funciones del administrador:
+
+* ver y gestionar todas las citas
+* confirmar, completar o cancelar citas
+* ver estadísticas y reportes del negocio
+
+---
+
+## 3.4 Frontend
+
+El frontend corresponde a la interfaz web donde los usuarios interactúan con el sistema.
+
+Funciones del frontend:
+
+* mostrar los horarios libres de cada barbero
+* capturar información del cliente
+* guardar la cita en la base de datos
+* avisar a n8n de cada cita nueva
+
+El frontend está hecho con *React + Vite* y se despliega en *Railway*.
+
+---
+
+## 3.5 Backend
+
+El backend del sistema está construido utilizando *n8n*, que funciona como un motor de automatización.
 
 Funciones del backend:
 
-* recibir solicitudes mediante webhooks
-* ejecutar flujos de automatización
+* recibir avisos de la página mediante webhooks
+* enviar confirmaciones y recordatorios de citas
+* cancelar citas desde el enlace enviado por WhatsApp
 * conectarse con la base de datos
 * gestionar integraciones con servicios externos
 
 ---
 
-## 3.4 Base de Datos
+## 3.6 Base de Datos
 
 La base de datos almacena toda la información del sistema.
 
 Datos almacenados:
 
-* clientes
+* perfiles de usuarios
+* barberos y sus horarios
+* servicios y precios
 * citas
-* horarios disponibles
-* historial de servicios
-* registros de ventas
+* horarios ocupados
+* recordatorios
+* calificaciones
+* registro de notificaciones enviadas
 
-La base de datos es gestionada mediante **Supabase**.
+La base de datos es gestionada mediante *Firebase (Firestore), y las cuentas de usuario con **Firebase Authentication*.
 
 ---
 
-## 3.5 Sistema de Notificaciones
+## 3.7 Sistema de Notificaciones
 
-El sistema utiliza la API de **WhatsApp** para enviar notificaciones automáticas como:
+El sistema utiliza *WhatsApp mediante Evolution API* para enviar notificaciones automáticas como:
 
 * confirmación de citas
 * recordatorios
@@ -93,9 +125,9 @@ El sistema utiliza la API de **WhatsApp** para enviar notificaciones automática
 
 ---
 
-## 3.6 Sistema de Inteligencia Artificial
+## 3.8 Sistema de Inteligencia Artificial
 
-El sistema puede integrar **OpenAI** para generar análisis automáticos de ventas y reportes del negocio.
+El sistema puede integrar *OpenAI* para generar análisis automáticos de ventas y reportes del negocio.
 
 Esto permite al administrador comprender mejor el rendimiento de la barbería.
 
@@ -105,13 +137,13 @@ Esto permite al administrador comprender mejor el rendimiento de la barbería.
 
 El funcionamiento general del sistema sigue el siguiente flujo:
 
-1. El cliente accede al formulario de reservas.
-2. El cliente selecciona fecha y hora para la cita.
-3. El formulario envía los datos mediante un webhook.
-4. n8n recibe la solicitud y procesa la información.
-5. La cita se registra en la base de datos.
-6. El cliente recibe una confirmación por WhatsApp.
-7. Antes de la cita el sistema envía recordatorios automáticos.
+1. El cliente inicia sesión y abre el formulario de reservas.
+2. El cliente elige servicio, barbero, fecha y hora.
+3. La página guarda la cita en Firestore con estado "pendiente".
+4. La página avisa a n8n mediante un webhook con el ID de la cita.
+5. n8n lee la cita en Firestore y envía la confirmación por WhatsApp.
+6. Antes de la cita, n8n envía recordatorios automáticos.
+7. Si el cliente cancela, la hora queda libre y n8n avisa la cancelación por WhatsApp.
 
 ---
 
@@ -123,9 +155,10 @@ Los diagramas utilizados para describir la arquitectura del sistema se encuentra
 
 Diagramas incluidos:
 
-* Diagrama de arquitectura del sistema
-* Diagrama de flujo de automatización
-* Diagrama de casos de uso
+* Diagrama de casos de uso (casos de uso.jpg)
+* Diagrama del frontend (diagrama front.jpeg)
+* Diagrama del backend (diagrama back.jpeg)
+* Todos los diagramas en un solo archivo (diagramas.pdf)
 
 ---
 
@@ -135,7 +168,8 @@ Las tecnologías utilizadas en el proyecto son:
 
 Frontend
 
-* Vercel
+* React + Vite + TypeScript
+* Railway (despliegue)
 
 Backend
 
@@ -143,11 +177,11 @@ Backend
 
 Base de datos
 
-* Supabase
+* Firebase (Firestore y Authentication)
 
 Integraciones
 
-* API de WhatsApp
+* WhatsApp (Evolution API)
 * OpenAI API
 
 ---

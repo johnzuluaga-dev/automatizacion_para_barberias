@@ -39,7 +39,7 @@ Esto ayuda a mejorar la eficiencia del negocio y la experiencia del cliente.
 
 ---
 
-# 🏗 Arquitectura del Sistema
+# 🏗️ Arquitectura del Sistema
 
 El sistema está basado en una arquitectura de automatización orientada a eventos.
 
@@ -53,7 +53,7 @@ El motor principal de automatización del sistema es n8n que actúa como orquest
 
 Frontend
 
-* Aplicación web desplegada en Vercel
+* Aplicación web en React + Vite, desplegada en Railway
 
 Backend
 
@@ -65,7 +65,7 @@ Base de Datos
 
 Integraciones
 
-* API de WhatsApp para envío de notificaciones
+* WhatsApp mediante Evolution API para envío de notificaciones
 * IA mediante OpenAI para análisis de ventas
 
 Control de versiones
@@ -75,46 +75,49 @@ Control de versiones
 
 ---
 
-# 🖥 Frontend: cómo correrlo
+# 🖥️ Cómo correr la aplicación
 
-La app web está en `frontend/` (Vite + React + TypeScript + Tailwind CSS). Requiere Node 24 (ver `.nvmrc`).
-
-```bash
-cd barberflow
-cp .env.example .env   # completa las variables
+bash
+cd frontend
 npm install
 npm run dev            # http://localhost:3000
-npm run check          # typecheck + lint + pruebas + build
-```
 
-Las cuentas, roles y permisos usan **Firebase Authentication** y las reglas de Firestore. Diseño, reglas y datos de prueba están en [backend/firebase/DISENO.md](backend/firebase/DISENO.md). Antes de usarlo: activa Correo/contraseña en Authentication, carga el seed (`npm run seed` en `firebase/`) y publica las reglas (`firebase deploy --only firestore:rules,firestore:indexes`).
 
-Más detalle de las pruebas en [docs/TESTING.md](docs/TESTING.md).
+Antes de la primera vez, copia frontend/.env.example como frontend/.env y completa los valores de Firebase y n8n.
+
+### Configuración inicial de Firebase (solo una vez, ya está hecha)
+
+Solo se necesita si se crea un proyecto de Firebase nuevo. Se hace dentro de backend/firebase/:
+
+- npm run seed: carga barberos y servicios.
+- firebase deploy --only firestore:rules,firestore:indexes: publica las reglas.
+- npm run rol: asigna el rol de admin o barbero a una cuenta.
+
+Diseño de la base de datos en [backend/firebase/DISENO.md](backend/firebase/DISENO.md). Pruebas en [docs/TESTING.md](docs/TESTING.md).
 
 ---
 
 # 🔄 Flujo del Sistema
 
-1. El cliente accede a la página web.
-2. El cliente agenda una cita mediante un formulario.
-3. Los datos se envían al sistema mediante un webhook.
-4. n8n recibe la solicitud y procesa la información.
-5. La cita se guarda en la base de datos.
-6. El cliente recibe una confirmación por WhatsApp.
-7. Antes de la cita el sistema envía recordatorios automáticos.
-8. El administrador puede visualizar estadísticas y reportes desde un dashboard.
+1. El cliente inicia sesión y abre el formulario de reservas.
+2. El cliente elige servicio, barbero, fecha y hora.
+3. La página guarda la cita en Firestore con estado "pendiente".
+4. La página avisa a n8n mediante un webhook con el ID de la cita.
+5. n8n envía la confirmación por WhatsApp.
+6. Antes de la cita, n8n envía recordatorios automáticos.
+7. El administrador puede visualizar estadísticas y reportes desde un dashboard.
 
 ---
 
 # 📊 Funcionalidades del Sistema
 
-✔ Agendamiento automático de citas
-✔ Cancelación de citas
-✔ Confirmaciones automáticas
-✔ Recordatorios de citas
-✔ Notificaciones por WhatsApp
-✔ Dashboard de estadísticas
-✔ Reportes automáticos del negocio
+✔️ Agendamiento automático de citas
+✔️ Cancelación de citas
+✔️ Confirmaciones automáticas
+✔️ Recordatorios de citas
+✔️ Notificaciones por WhatsApp
+✔️ Dashboard de estadísticas
+✔️ Reportes automáticos del negocio
 
 ---
 
@@ -140,9 +143,14 @@ En futuras versiones del sistema se podrían implementar:
 
 ---
 
-# 👨‍💻 Autor
+# 👨‍💻 Autores
 
-John Zuluaga
-Estudiante de Desarrollo de Software
+* John Zuluaga
+* Simón Restrepo
+* Johan Sebastián Palacios
+* Juan Pablo Cartagena
+* Nicolás Giraldo
+
+Estudiantes de Desarrollo de Software
 Medellín – Colombia
 2026
