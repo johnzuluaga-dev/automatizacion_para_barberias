@@ -35,6 +35,7 @@ beforeEach(() => {
     barber_id: input.barber.id,
     id: 'nueva',
     status: 'pendiente',
+    origin: 'web',
     created_at: '',
   }));
   vi.mocked(getTakenSlots).mockReset().mockResolvedValue([]);

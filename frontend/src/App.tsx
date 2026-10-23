@@ -15,6 +15,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const MyAppointmentsPage = lazy(() => import('./pages/MyAppointmentsPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const CancelPage = lazy(() => import('./pages/CancelPage'));
+const LinkAppointmentPage = lazy(() => import('./pages/LinkAppointmentPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const BarberPage = lazy(() => import('./pages/BarberPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
@@ -35,6 +36,15 @@ export function AppRoutes() {
           <Route path="/olvide-contrasena" element={<ForgotPasswordPage />} />
           <Route path="/terminos" element={<TermsPage />} />
           <Route path="/cancel" element={<CancelPage />} />
+          {/* Enlace que manda el chatbot al reservar por WhatsApp: liga la cita a la cuenta. */}
+          <Route
+            path="/vincular"
+            element={
+              <RequireAuth>
+                <LinkAppointmentPage />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/mis-citas"
             element={

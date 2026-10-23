@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   setDoc,
   Timestamp,
+  updateDoc,
   where,
   writeBatch,
   type DocumentData,
@@ -25,6 +26,9 @@ import { BOGOTA_OFFSET, slotCells } from '@/features/booking/schedule';
 import { auth, db } from './firebase';
 
 export type AppointmentStatus = 'pendiente' | 'confirmada' | 'completada' | 'cancelada' | 'no_asistio';
+
+/** Por dónde se reservó: la web o el chatbot de WhatsApp (n8n). */
+export type AppointmentOrigin = 'web' | 'whatsapp';
 
 export interface Appointment {
   id: string;
@@ -37,6 +41,7 @@ export interface Appointment {
   appointment_date: string;
   appointment_time: string;
   status: AppointmentStatus;
+  origin: AppointmentOrigin;
   created_at: string;
   cancel_token?: string;
   user_id?: string | null;
@@ -88,6 +93,7 @@ function toAppointment(id: string, data: DocumentData): Appointment {
     appointment_date: data.fecha,
     appointment_time: data.horaInicio,
     status: data.estado,
+    origin: data.origen === 'whatsapp' ? 'whatsapp' : 'web',
     created_at: createdAt,
     cancel_token: data.cancelToken,
     user_id: data.clienteId ?? null,
@@ -227,6 +233,7 @@ export async function createAppointment(input: NewAppointment, userId: string): 
     appointment_date: input.appointment_date,
     appointment_time: input.appointment_time,
     status: 'confirmada',
+    origin: 'web',
     created_at: new Date().toISOString(),
     cancel_token: cancelToken,
     user_id: userId,
@@ -303,6 +310,30 @@ export async function cancelByToken(token: string): Promise<boolean> {
   if (!response.ok) throw new DataError('No pudimos cancelar la cita.');
   const body = (await response.json().catch(() => ({}))) as { cancelada?: boolean };
   return body.cancelada !== false;
+}
+
+/**
+ * Liga a la cuenta con sesión una cita reservada por WhatsApp (/vincular?cita=<id>&t=<token>).
+ * El enlace solo lo recibe quien reservó: las reglas exigen que `tokenVinculacion` sea el
+ * `cancelToken` de la cita y que todavía no tenga dueño.
+ */
+export async function linkWhatsAppAppointment(citaId: string, token: string): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new DataError('Ingresa de nuevo para agregar la cita.');
+  try {
+    await updateDoc(doc(db, 'citas', citaId), {
+      clienteId: uid,
+      tokenVinculacion: token,
+      vinculadaEn: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === 'permission-denied' || code === 'not-found') {
+      throw new DataError('Este enlace no es válido o la cita ya está en otra cuenta.', code);
+    }
+    fail(error, 'No pudimos agregar la cita a tu cuenta. Inténtalo de nuevo.');
+  }
 }
 
 /* ------------------------------- Reseñas ------------------------------ */

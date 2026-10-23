@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CalendarDays, Check, CheckCheck, RotateCw, UserX, X } from 'lucide-react';
+import { CalendarDays, Check, CheckCheck, MessageCircle, RotateCw, UserX, X } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -121,7 +121,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
           title={appointments.length === 0 ? 'No hay citas registradas todavía.' : 'Nada por aquí'}
           description={
             appointments.length === 0
-              ? 'Cuando un cliente agende desde la web, su cita aparecerá en esta lista.'
+              ? 'Cuando un cliente agende desde la web o por WhatsApp, su cita aparecerá en esta lista.'
               : 'No hay citas con este estado.'
           }
           action={
@@ -158,7 +158,15 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
                     className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 px-4 py-4 transition-colors duration-150 hover:bg-surface-2/50 sm:px-6 md:table-row md:p-0"
                   >
                     <td className="md:px-6 md:py-4">
-                      <div className="font-semibold text-ink">{apt.client_name}</div>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-semibold text-ink">{apt.client_name}</span>
+                        {apt.origin === 'whatsapp' && (
+                          <Badge tone="info" className="px-2 py-0.5">
+                            <MessageCircle aria-hidden className="size-3" />
+                            WhatsApp
+                          </Badge>
+                        )}
+                      </div>
                       <div className="tabular text-xs text-muted">{apt.client_phone}</div>
                     </td>
                     <td className="col-start-2 row-start-1 self-start md:hidden">

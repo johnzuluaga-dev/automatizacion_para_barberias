@@ -43,6 +43,7 @@ beforeEach(() => {
       appointment_date: '2026-10-20',
       appointment_time: '11:30',
       status: 'pendiente',
+      origin: 'web',
       created_at: '',
     },
   ]);

@@ -71,6 +71,15 @@ service cloud.firestore {
             && request.resource.data.canceladaPor == 'cliente'
             && request.resource.data.diff(resource.data).affectedKeys()
                  .hasOnly(['estado', 'canceladaEn', 'canceladaPor', 'motivoCancelacion', 'updatedAt']))
+        // Cita reservada por WhatsApp (sin dueño): quien abre el enlace secreto del chatbot
+        // (/vincular?cita=<id>&t=<cancelToken>) la liga a su cuenta. Solo cambian estos campos.
+        || (signedIn()
+            && resource.data.origen == 'whatsapp'
+            && resource.data.clienteId == null
+            && request.resource.data.clienteId == request.auth.uid
+            && request.resource.data.tokenVinculacion == resource.data.cancelToken
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['clienteId', 'tokenVinculacion', 'vinculadaEn', 'updatedAt']))
         // El barbero gestiona el estado de sus citas.
         || (isBarbero()
             && resource.data.barberoId == miBarberoId()

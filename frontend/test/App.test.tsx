@@ -34,6 +34,7 @@ const appointments: Appointment[] = [
     appointment_date: '2026-10-20',
     appointment_time: '11:30',
     status: 'pendiente',
+    origin: 'web',
     created_at: '2026-10-14T10:00:00Z',
   },
   {
@@ -46,6 +47,7 @@ const appointments: Appointment[] = [
     appointment_date: '2026-10-21',
     appointment_time: '15:00',
     status: 'completada',
+    origin: 'web',
     created_at: '2026-10-14T10:00:00Z',
   },
 ];

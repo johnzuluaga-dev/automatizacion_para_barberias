@@ -26,6 +26,7 @@ const cita = (over: Partial<Appointment>): Appointment => ({
   appointment_date: '2026-10-01',
   appointment_time: '11:30',
   status: 'completada',
+  origin: 'web',
   created_at: '2026-09-30T10:00:00Z',
   ...over,
 });
