@@ -102,7 +102,7 @@ describe('reserva con sesión', () => {
     expect(createAppointment).not.toHaveBeenCalled();
   });
 
-  test('crea la cita pendiente en Firestore con los datos del perfil', async () => {
+  test('crea la cita confirmada en Firestore con los datos del perfil', async () => {
     const user = userEvent.setup();
     renderAt('/');
     await chooseSelection(user);

@@ -44,7 +44,7 @@ export function BookingSuccess({ values, service, barber, onReset }: BookingSucc
           ¡Cita agendada!
         </h1>
         <p className="mt-2 text-muted">
-          Quedó <strong className="font-semibold text-ink">pendiente</strong> hasta que la barbería la confirme. La verás en Mis citas.
+          Quedó <strong className="font-semibold text-ink">confirmada</strong>. La verás en Mis citas.
         </p>
 
         <Perforation className="-mx-6 sm:-mx-8" />

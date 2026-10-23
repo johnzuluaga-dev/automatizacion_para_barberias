@@ -159,7 +159,7 @@ async function deleteSlots(batch: ReturnType<typeof writeBatch>, citaId: string)
 
 /* ------------------------------ Clientes ----------------------------- */
 
-/** Crea la cita del usuario con sesión; queda "pendiente" hasta que el admin la confirme. */
+/** Crea la cita del usuario con sesión; nace "confirmada" porque el batch con los cupos garantiza que el horario está libre. */
 export async function createAppointment(input: NewAppointment, userId: string): Promise<Appointment> {
   const { service, barber } = input;
   const barberoId = barber.id;
@@ -187,7 +187,7 @@ export async function createAppointment(input: NewAppointment, userId: string): 
       horaInicio: input.appointment_time,
       inicio: Timestamp.fromDate(inicio),
       fin: Timestamp.fromDate(fin),
-      estado: 'pendiente',
+      estado: 'confirmada',
       notas: '',
       servicios: [
         { servicioId: service.id, nombre: service.name, precio: service.price, duracionMin: service.durationMin },
@@ -226,7 +226,7 @@ export async function createAppointment(input: NewAppointment, userId: string): 
     barber_id: barber.id,
     appointment_date: input.appointment_date,
     appointment_time: input.appointment_time,
-    status: 'pendiente',
+    status: 'confirmada',
     created_at: new Date().toISOString(),
     cancel_token: cancelToken,
     user_id: userId,

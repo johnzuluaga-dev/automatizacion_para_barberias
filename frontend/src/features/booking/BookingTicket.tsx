@@ -86,7 +86,7 @@ export function BookingTicket({ values, service, barber, action }: BookingTicket
       </div>
 
       <p className="mt-3 hidden text-xs text-muted lg:block">
-        Queda pendiente hasta que la barbería la confirme.
+        Queda confirmada al instante si el horario está libre.
       </p>
     </aside>
   );

@@ -163,7 +163,7 @@ export default function MyAppointmentsPage() {
                   <EmptyState
                     icon={<CalendarPlus />}
                     title="No tienes citas próximas"
-                    description="Elige servicio, barbero y hora; queda pendiente hasta que la barbería la confirme."
+                    description="Elige servicio, barbero y hora; queda confirmada al instante."
                     action={
                       <Link to="/" className={buttonStyles()}>
                         Agendar cita

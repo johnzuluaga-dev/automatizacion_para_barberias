@@ -10,6 +10,8 @@ interface ImportMetaEnv {
   readonly VITE_N8N_WEBHOOK_URL?: string;
   /** "true" para avisar a n8n de cada reserva nueva (desactivado por defecto). */
   readonly VITE_N8N_ENABLED?: string;
+  /** Webhook de n8n que avisa por WhatsApp que una cita se canceló (recibe solo el citaId). */
+  readonly VITE_N8N_CANCELLED_WEBHOOK_URL?: string;
   /** Webhook de n8n que cancela una cita por su cancelToken (enlace sin sesión). */
   readonly VITE_N8N_CANCEL_WEBHOOK_URL?: string;
 }

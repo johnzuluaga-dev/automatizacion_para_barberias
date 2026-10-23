@@ -7,6 +7,8 @@ import {
   type AppointmentStatus,
   type StatusActor,
 } from '@/lib/citas';
+import { config } from '@/lib/config';
+import { sendCancellationToN8n } from '@/lib/n8n';
 import { STATUS_META } from './status';
 
 interface State {
@@ -50,6 +52,10 @@ export function useAppointments({ load: loader = getAppointments, actor = 'admin
       setUpdatingId(appointment.id);
       try {
         await updateAppointmentStatus(appointment.id, status, actor);
+        if (status === 'cancelada' && config.n8nCancelledEnabled) {
+          // Aviso opcional por WhatsApp; si falla, la cancelación ya está guardada.
+          void sendCancellationToN8n(appointment.id).catch(() => undefined);
+        }
         setState((s) => ({
           ...s,
           appointments: s.appointments.map((a) => (a.id === appointment.id ? { ...a, status } : a)),

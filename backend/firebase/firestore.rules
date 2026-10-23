@@ -48,10 +48,10 @@ service cloud.firestore {
         || isAdmin()
         || (isBarbero() && resource.data.barberoId == miBarberoId()));
 
-      // El cliente crea citas propias, pendientes, futuras, de lunes a sábado, 11:00 a 19:30 en punto o y media.
+      // El cliente crea citas propias, confirmadas (los cupos garantizan el horario libre), futuras, de lunes a sábado, 11:00 a 19:30 en punto o y media.
       allow create: if signedIn() && emailVerificado()
         && request.resource.data.clienteId == request.auth.uid
-        && request.resource.data.estado == 'pendiente'
+        && request.resource.data.estado == 'confirmada'
         && request.resource.data.origen == 'web'
         && request.resource.data.inicio > request.time
         && request.resource.data.horaInicio.matches('^[0-9]{2}:(00|30)$')

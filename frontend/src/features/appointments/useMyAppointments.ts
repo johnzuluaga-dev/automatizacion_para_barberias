@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/toast/toast-context';
 import { cancelMyAppointment, getMyAppointments, type Appointment } from '@/lib/citas';
+import { config } from '@/lib/config';
+import { sendCancellationToN8n } from '@/lib/n8n';
 
 interface State {
   appointments: Appointment[];
@@ -36,6 +38,10 @@ export function useMyAppointments() {
       setCancellingId(appointment.id);
       try {
         await cancelMyAppointment(appointment.id);
+        if (config.n8nCancelledEnabled) {
+          // Aviso opcional por WhatsApp; si falla, la cancelación ya está guardada.
+          void sendCancellationToN8n(appointment.id).catch(() => undefined);
+        }
         setState((s) => ({
           ...s,
           appointments: s.appointments.map((a) => (a.id === appointment.id ? { ...a, status: 'cancelada' } : a)),
