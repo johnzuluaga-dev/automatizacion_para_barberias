@@ -1,13 +1,15 @@
 import { workflow, node, trigger, ifElse, switchCase, languageModel, memory, tool, expr } from '@n8n/workflow-sdk';
 
 // Ajustes del workflow que el SDK no fija (se aplican con update_workflow → setWorkflowSettings):
-// timezone America/Bogota, executionTimeout 90 s (Gemini saturado no deja la ejecución colgada)
+// timezone America/Bogota, executionTimeout 180 s (alcanza a correr el modelo de respaldo o el aviso de error)
 // y saveDataSuccessExecution "none" (Evolution manda su apikey en el cuerpo del webhook).
+// No usar gemini-flash-latest: con alta demanda se quedaba minutos reintentando 503.
 
 const EVOLUTION = 'http://evolution:8080';
 const evolution = { httpHeaderAuth: { id: 'kSbBkQdGat4M77BE', name: 'evolution' } };
 const gemini = { googlePalmApi: { id: 'yJlJHUjyklBA42Ha', name: 'Gemini' } };
-const MODELO = 'models/gemini-flash-latest';
+const MODELO = 'models/gemini-3.5-flash';
+const MODELO_RESPALDO = 'models/gemini-3.5-flash-lite';
 const C_FECHA = { id: 'fecha', displayName: 'fecha', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' };
 const C_SERVICIO = { id: 'servicio', displayName: 'servicio', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' };
 const C_BARBERO = { id: 'barbero', displayName: 'barbero', required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: 'string' };
@@ -22,6 +24,8 @@ const WF_CREAR = { __rl: true, mode: 'id', value: 'KwsrRqQVA2sMwB5u', cachedResu
 const WF_CANCELAR = { __rl: true, mode: 'id', value: 'jJ39b81XFOYdVyVk', cachedResultName: 'BarberFlow – Cancelar cita' };
 const WF_ENVIAR = { __rl: true, mode: 'id', value: 'rb3g0zW5WUW0e65C', cachedResultName: 'BarberFlow – Enviar WhatsApp' };
 const TELEFONO = "={{ $('Mensaje para el agente').first().json.telefono }}";
+// A quién se responde: el teléfono o, si WhatsApp no lo comparte, el JID @lid.
+const DESTINO = "={{ $('Mensaje para el agente').first().json.destino }}";
 
 const webhook = trigger({
   type: 'n8n-nodes-base.webhook',
@@ -46,9 +50,12 @@ const p = $json.body ?? $json;
 const d = p.data ?? {};
 const key = d.key ?? {};
 const jid = String(key.remoteJid ?? '');
-// Con direcciones @lid, el número real viene en remoteJidAlt / senderPn.
+// Con direcciones @lid, el número real viene en remoteJidAlt / senderPn (si WhatsApp lo comparte).
 const jidTelefono = [jid, key.remoteJidAlt, key.senderPn].map((x) => String(x ?? '')).find((x) => x.endsWith('@s.whatsapp.net')) ?? '';
-const telefono = jidTelefono.split('@')[0].split(':')[0].replace(/\\D/g, '');
+const digitos = jidTelefono.split('@')[0].split(':')[0].replace(/\\D/g, '');
+const telefono = /^\\d{8,15}$/.test(digitos) ? digitos : '';
+// Sin número visible se responde al mismo @lid; para reservar, el agente le pide el celular.
+const destino = telefono || (jid.endsWith('@lid') ? jid : '');
 const m = d.message ?? {};
 const tipo = String(d.messageType ?? Object.keys(m)[0] ?? '');
 
@@ -57,13 +64,14 @@ if (String(p.event ?? 'messages.upsert').toLowerCase().replace('_', '.') !== 'me
 else if (p.instance && p.instance !== 'asistente') motivo = 'otra instancia';
 else if (key.fromMe === true) motivo = 'mensaje propio (fromMe)';
 else if (jid.endsWith('@g.us') || jid.endsWith('@broadcast') || jid.endsWith('@newsletter')) motivo = 'grupo o difusión';
-else if (!/^\\d{8,15}$/.test(telefono)) motivo = 'sin número de teléfono';
+else if (!destino) motivo = 'sin número ni LID';
 
 return {
   json: {
     procesar: !motivo,
     motivo,
     telefono,
+    destino,
     nombre: String(d.pushName ?? '').trim(),
     tipo,
     texto: String(m.conversation ?? m.extendedTextMessage?.text ?? '').trim(),
@@ -287,6 +295,7 @@ const paraAgente = node({
         assignments: [
           { id: 'texto', name: 'texto', value: expr('{{ $json.texto }}'), type: 'string' },
           { id: 'tel', name: 'telefono', value: expr("{{ $('Normalizar mensaje').first().json.telefono }}"), type: 'string' },
+          { id: 'dest', name: 'destino', value: expr("{{ $('Normalizar mensaje').first().json.destino }}"), type: 'string' },
           { id: 'nom', name: 'nombre', value: expr("{{ $('Normalizar mensaje').first().json.nombre }}"), type: 'string' },
           { id: 'via', name: 'via', value: expr("{{ $('Normalizar mensaje').first().json.tipo === 'audioMessage' ? 'audio' : 'texto' }}"), type: 'string' }
         ]
@@ -301,10 +310,21 @@ const modelo = languageModel({
   type: '@n8n/n8n-nodes-langchain.lmChatGoogleGemini',
   version: 1.2,
   config: {
-    name: 'Gemini Flash',
+    name: 'Gemini 3.5 Flash',
     parameters: { modelName: MODELO, options: { temperature: 0.3, maxOutputTokens: 1024 } },
     credentials: gemini,
     position: [2300, 480]
+  }
+});
+
+const modeloRespaldo = languageModel({
+  type: '@n8n/n8n-nodes-langchain.lmChatGoogleGemini',
+  version: 1.2,
+  config: {
+    name: 'Gemini 3.5 Flash Lite (respaldo)',
+    parameters: { modelName: MODELO_RESPALDO, options: { temperature: 0.3, maxOutputTokens: 1024 } },
+    credentials: gemini,
+    position: [2300, 640]
   }
 });
 
@@ -313,7 +333,7 @@ const memoria = memory({
   version: 1.4,
   config: {
     name: 'Memoria por teléfono',
-    parameters: { sessionIdType: 'customKey', sessionKey: TELEFONO, contextWindowLength: 12 },
+    parameters: { sessionIdType: 'customKey', sessionKey: DESTINO, contextWindowLength: 12 },
     position: [2440, 480]
   }
 });
@@ -356,7 +376,8 @@ const crearTool = tool({
       workflowInputs: {
         mappingMode: 'defineBelow',
         value: {
-          telefono: TELEFONO,
+          // Con número visible se usa ese; con @lid, el que el cliente dé en la conversación.
+          telefono: "={{ $('Mensaje para el agente').first().json.telefono || $fromAI('telefonoCliente', 'Celular del cliente en formato 57 + 10 dígitos. Solo cuando el mensaje dice que su número NO está disponible; si se conoce, déjalo vacío', 'string') }}",
           clienteNombre: "={{ $fromAI('clienteNombre', 'Nombre del cliente para la cita', 'string') }}",
           servicio: "={{ $fromAI('servicio', 'id del servicio (de consultar_disponibilidad)', 'string') }}",
           barbero: "={{ $fromAI('barbero', 'id del barbero (de consultar_disponibilidad)', 'string') }}",
@@ -379,7 +400,7 @@ const cancelarTool = tool({
   config: {
     name: 'cancelar_cita',
     parameters: {
-      description: 'Sin citaId: lista las citas próximas de este cliente. Con citaId: cancela esa cita (solo después de que el cliente confirme). Solo funciona con citas del número que escribe.',
+      description: 'Sin citaId: lista las citas próximas de este cliente. Con citaId: cancela esa cita (solo después de que el cliente confirme). Solo funciona con citas del número que escribe. No la uses si el número del cliente NO está disponible.',
       source: 'database',
       workflowId: WF_CANCELAR,
       workflowInputs: {
@@ -410,7 +431,7 @@ const enviarTool = tool({
       workflowInputs: {
         mappingMode: 'defineBelow',
         value: {
-          numero: TELEFONO,
+          numero: DESTINO,
           texto: "={{ $fromAI('texto', 'Mensaje completo para el cliente', 'string') }}"
         },
         matchingColumns: [],
@@ -445,10 +466,12 @@ Reglas para agendar
 3. Consulta disponibilidad y ofrece máximo 6 horas libres. Si el cliente acepta cualquier barbero, elige uno que tenga esa hora libre.
 4. Antes de crear la cita, envía un resumen (servicio, barbero, día, hora, precio) y pide confirmación. Solo con un "sí" claro llama a crear_cita.
 5. Si una herramienta responde ok:false, explica el motivo en palabras sencillas y ofrece alternativas.
-6. Nunca pidas el número de teléfono: se toma del WhatsApp. No muestres ids internos al cliente.
+6. Si el número del cliente es conocido, nunca se lo pidas. Si dice "NO disponible", pídele su número de celular (10 dígitos) junto con los demás datos y pásalo en telefonoCliente con el formato 57 + 10 dígitos. No muestres ids internos al cliente.
+7. Cuando crear_cita responda ok, confirma la cita en un solo mensaje. Si trae enlaceWeb, agrégalo tal cual al final: "Para verla o cancelarla en la web, abre este enlace e inicia sesión (o crea tu cuenta): <enlaceWeb>".
 
 Reglas para cancelar
 - Llama a cancelar_cita sin citaId para ver sus citas, pregunta cuál (si hay varias), pide confirmación y entonces cancela con el citaId.
+- Si el número del cliente NO está disponible, no uses cancelar_cita: explícale con amabilidad que por seguridad debe cancelar desde la web, con el enlace que le enviamos al reservar.
 
 Cómo terminas cada turno
 - Responde al cliente SIEMPRE con la herramienta enviar_whatsapp, una sola vez y con el mensaje completo.
@@ -460,15 +483,13 @@ const agente = node({
   config: {
     name: 'Asistente BarberFlow',
     onError: 'continueErrorOutput',
-    retryOnFail: true,
-    maxTries: 2,
-    waitBetweenTries: 3000,
     parameters: {
       promptType: 'define',
-      text: expr('Fecha y hora actual en Bogotá: {{ $now.setZone("America/Bogota").setLocale("es").toFormat("cccc d \'de\' LLLL yyyy, HH:mm") }} (hoy = {{ $now.setZone("America/Bogota").toFormat("yyyy-MM-dd") }}).\nNombre de WhatsApp del cliente: {{ $json.nombre || "desconocido" }}.\nEl mensaje llegó por {{ $json.via }}.\n\nMensaje del cliente:\n{{ $json.texto }}'),
+      needsFallback: true,
+      text: expr('Fecha y hora actual en Bogotá: {{ $now.setZone("America/Bogota").setLocale("es").toFormat("cccc d \'de\' LLLL yyyy, HH:mm") }} (hoy = {{ $now.setZone("America/Bogota").toFormat("yyyy-MM-dd") }}).\nNombre de WhatsApp del cliente: {{ $json.nombre || "desconocido" }}.\nNúmero del cliente: {{ $json.telefono ? "conocido" : "NO disponible (escribe con un identificador privado de WhatsApp)" }}.\nEl mensaje llegó por {{ $json.via }}.\n\nMensaje del cliente:\n{{ $json.texto }}'),
       options: { systemMessage: SISTEMA, maxIterations: 8, returnIntermediateSteps: true }
     },
-    subnodes: { model: modelo, memory: memoria, tools: [consultarTool, crearTool, cancelarTool, enviarTool] },
+    subnodes: { model: [modelo, modeloRespaldo], memory: memoria, tools: [consultarTool, crearTool, cancelarTool, enviarTool] },
     position: [2440, 200]
   },
   output: [{ output: 'LISTO', intermediateSteps: [] }]
@@ -534,7 +555,7 @@ const enviarRespuesta = node({
       mode: 'each',
       workflowInputs: {
         mappingMode: 'defineBelow',
-        value: { numero: "={{ $('Normalizar mensaje').first().json.telefono }}", texto: '={{ $json.texto }}' },
+        value: { numero: "={{ $('Normalizar mensaje').first().json.destino }}", texto: '={{ $json.texto }}' },
         matchingColumns: [],
         schema: [C_NUMERO, C_TEXTO],
         attemptToConvertTypes: false,

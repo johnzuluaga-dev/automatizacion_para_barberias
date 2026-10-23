@@ -28,7 +28,8 @@ const enviar = node({
       sendBody: true,
       contentType: 'json',
       specifyBody: 'json',
-      jsonBody: expr('{{ JSON.stringify({ number: String($json.numero ?? "").replace(/\\D/g, ""), text: String($json.texto ?? "") }) }}'),
+      // numero puede ser un teléfono (se dejan solo los dígitos) o un JID completo como "123@lid" (se envía tal cual).
+      jsonBody: expr('{{ JSON.stringify({ number: ((n) => n.includes("@") ? n.trim() : n.replace(/\\D/g, ""))(String($json.numero ?? "")), text: String($json.texto ?? "") }) }}'),
       options: { timeout: 20000 }
     },
     credentials: { httpHeaderAuth: { id: 'kSbBkQdGat4M77BE', name: 'evolution' } },

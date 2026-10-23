@@ -88,6 +88,8 @@ const validar = node({
 const ZONA = 'America/Bogota';
 const MAX_CITAS_PROXIMAS = 2;
 const DOCS = 'projects/barber-flow-42bcc/databases/(default)/documents';
+// Dominio de la web (sin / final). Vacío: el bot no manda el enlace para ligar la cita a la cuenta.
+const WEB_URL = '';
 
 const entrada = $('Entrada: datos de la reserva').first().json;
 const disp = $('Consultar disponibilidad').first().json;
@@ -129,6 +131,9 @@ const uuid = () =>
     ? crypto.randomUUID()
     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = (Math.random() * 16) | 0; return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16); });
 const citaId = aleatorio(20);
+// Secreto de la cita: cancela por enlace y, desde la web, la liga a la cuenta del cliente (/vincular).
+const cancelToken = uuid();
+const enlaceWeb = WEB_URL ? WEB_URL + '/vincular?cita=' + citaId + '&t=' + cancelToken : '';
 
 const s = (v) => ({ stringValue: String(v) });
 const num = (v) => (Number.isInteger(Number(v)) ? { integerValue: String(Number(v)) } : { doubleValue: Number(v) });
@@ -153,7 +158,7 @@ const fields = {
   servicios: arr([map({ servicioId: s(servicio.id), nombre: s(servicio.nombre), precio: num(servicio.precio ?? 0), duracionMin: num(servicio.duracionMin) })]),
   precioTotal: num(servicio.precio ?? 0),
   origen: s('whatsapp'),
-  cancelToken: s(uuid()),
+  cancelToken: s(cancelToken),
   slotIds: arr(slotIds.map(s)),
 };
 const ahoraServidor = [
@@ -173,7 +178,7 @@ return [{
   json: {
     valido: true,
     commit: { writes },
-    resumen: { citaId, clienteNombre: nombre, servicio: servicio.nombre, precio: servicio.precio, barbero: opcion.barberoNombre, fecha: disp.fecha, fechaTexto: disp.fechaTexto, hora },
+    resumen: { citaId, clienteNombre: nombre, servicio: servicio.nombre, precio: servicio.precio, barbero: opcion.barberoNombre, fecha: disp.fecha, fechaTexto: disp.fechaTexto, hora, enlaceWeb },
   },
 }];`
     },
