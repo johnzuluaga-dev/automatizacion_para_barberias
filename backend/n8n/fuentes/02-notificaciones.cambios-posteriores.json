@@ -1,0 +1,310 @@
+[
+  [
+    {
+      "type": "updateNodeParameters",
+      "nodeName": "Webhook cita creada",
+      "parameters": {
+        "authentication": "none"
+      }
+    },
+    {
+      "type": "updateNodeParameters",
+      "nodeName": "Webhook cita cancelada",
+      "parameters": {
+        "authentication": "none"
+      }
+    },
+    {
+      "type": "removeNode",
+      "nodeName": "Validar y armar confirmación"
+    },
+    {
+      "type": "removeNode",
+      "nodeName": "Validar y armar cancelación"
+    },
+    {
+      "type": "renameNode",
+      "oldName": "Responder 400",
+      "newName": "Responder error"
+    },
+    {
+      "type": "setNodeParameter",
+      "nodeName": "Responder error",
+      "path": "/options/responseCode",
+      "value": "={{ $json.httpStatus ?? 400 }}"
+    },
+    {
+      "type": "addNode",
+      "node": {
+        "name": "Evento: creada",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          220,
+          0
+        ],
+        "parameters": {
+          "mode": "manual",
+          "includeOtherFields": false,
+          "assignments": {
+            "assignments": [
+              {
+                "id": "evento",
+                "name": "evento",
+                "value": "creada",
+                "type": "string"
+              },
+              {
+                "id": "citaId",
+                "name": "citaId",
+                "value": "={{ String($json.body?.citaId ?? '').trim() }}",
+                "type": "string"
+              },
+              {
+                "id": "error",
+                "name": "error",
+                "value": "={{ (() => { const id = String($json.body?.citaId ?? '').trim(); if (!id) return 'Falta citaId'; return /^[A-Za-z0-9_-]{1,128}$/.test(id) ? '' : 'citaId inválido'; })() }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        }
+      }
+    },
+    {
+      "type": "addNode",
+      "node": {
+        "name": "Evento: cancelada",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          220,
+          272
+        ],
+        "parameters": {
+          "mode": "manual",
+          "includeOtherFields": false,
+          "assignments": {
+            "assignments": [
+              {
+                "id": "evento",
+                "name": "evento",
+                "value": "cancelada",
+                "type": "string"
+              },
+              {
+                "id": "citaId",
+                "name": "citaId",
+                "value": "={{ String($json.body?.citaId ?? '').trim() }}",
+                "type": "string"
+              },
+              {
+                "id": "error",
+                "name": "error",
+                "value": "={{ (() => { const id = String($json.body?.citaId ?? '').trim(); if (!id) return 'Falta citaId'; return /^[A-Za-z0-9_-]{1,128}$/.test(id) ? '' : 'citaId inválido'; })() }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        }
+      }
+    },
+    {
+      "type": "addNode",
+      "node": {
+        "name": "¿citaId válido?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          440,
+          136
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "sin-error",
+                "leftValue": "={{ $json.error }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "empty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      }
+    },
+    {
+      "type": "addNode",
+      "node": {
+        "name": "Leer cita",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.5,
+        "position": [
+          660,
+          40
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "=https://firestore.googleapis.com/v1/projects/barber-flow-42bcc/databases/(default)/documents/citas/{{ $json.citaId }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleApi",
+          "options": {
+            "response": {
+              "response": {
+                "neverError": true,
+                "fullResponse": true
+              }
+            }
+          }
+        },
+        "credentials": {
+          "googleApi": {
+            "id": "FxYnlaVTc5j020oa",
+            "name": "Firebase BarberFlow"
+          }
+        }
+      }
+    },
+    {
+      "type": "addNode",
+      "node": {
+        "name": "Validar cita y armar mensaje",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          880,
+          40
+        ],
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const ZONA = 'America/Bogota';\nconst ctx = $('¿citaId válido?').item.json; // { evento: 'creada' | 'cancelada', citaId }\nconst r = $json;\nconst val = (v) => (v == null ? undefined : v.stringValue ?? v.integerValue ?? v.doubleValue ?? v.booleanValue ?? v.timestampValue);\nconst fallo = (error, httpStatus = 400) => ({ json: { valido: false, error, httpStatus, citaId: ctx.citaId, evento: ctx.evento } });\n\n// Lectura de citas/{citaId} (la respuesta completa trae statusCode)\nif (r.statusCode === undefined) return fallo('No se pudo leer la cita en Firestore: ' + (r.error?.message ?? r.error ?? 'sin respuesta'), 502);\nif (r.statusCode === 404) return fallo('La cita ' + ctx.citaId + ' no existe');\nif (r.statusCode !== 200) return fallo('Firestore respondió ' + r.statusCode + ' al leer la cita', 502);\n\n// El estado debe coincidir con el evento: así nadie dispara avisos falsos con un citaId cualquiera\nconst f = r.body?.fields ?? {};\nconst esperado = ctx.evento === 'creada' ? 'confirmada' : 'cancelada';\nconst estado = val(f.estado);\nif (estado !== esperado) return fallo('La cita está \"' + estado + '\"; para este aviso debe estar \"' + esperado + '\"');\n\nconst c = {\n  clienteNombre: val(f.clienteNombre),\n  clienteTelefono: val(f.clienteTelefono),\n  fecha: val(f.fecha),\n  hora: val(f.horaInicio),\n  barberoNombre: val(f.barberoNombre) ?? '',\n  servicioNombre: (f.servicios?.arrayValue?.values ?? []).map((s) => val(s.mapValue?.fields?.nombre)).filter(Boolean).join(', '),\n  canceladaPor: val(f.canceladaPor) ?? '',\n};\nconst faltan = ['clienteNombre', 'clienteTelefono', 'fecha', 'hora'].filter((k) => !String(c[k] ?? '').trim());\nif (faltan.length) return fallo('A la cita le faltan campos: ' + faltan.join(', '));\nconst numero = String(c.clienteTelefono).replace(/[\\s+\\-()]/g, '');\nif (!/^57\\d{10}$/.test(numero)) return fallo('clienteTelefono inválido: debe empezar por 57 y tener 12 dígitos');\n\n// \"2026-10-24\" -> \"sábado 24 de octubre\"\nconst dia = DateTime.fromISO(c.fecha, { zone: ZONA });\nconst fecha = dia.isValid ? dia.setLocale('es').toFormat(\"cccc d 'de' LLLL\") : c.fecha;\n\nlet texto;\nif (ctx.evento === 'creada') {\n  texto = [\n    'Hola ' + c.clienteNombre + ', tu cita en BarberFlow quedó confirmada ✅',\n    '📅 ' + fecha,\n    '🕒 ' + c.hora,\n    '💈 Barbero: ' + c.barberoNombre,\n    '✂️ Servicio: ' + c.servicioNombre,\n  ].join('\\n');\n} else {\n  texto = 'Hola ' + c.clienteNombre + ', tu cita del ' + fecha + ' a las ' + c.hora + ' con ' + c.barberoNombre + ' fue cancelada ❌';\n  if (c.canceladaPor === 'admin') texto += '\\nLa barbería canceló la cita; puedes agendar otra desde la app.';\n}\n\nreturn { json: { valido: true, error: '', numero, texto, citaId: ctx.citaId, evento: ctx.evento } };"
+        }
+      }
+    },
+    {
+      "type": "setNodeSettings",
+      "nodeName": "Leer cita",
+      "settings": {
+        "onError": "continueRegularOutput"
+      }
+    },
+    {
+      "type": "setNodePosition",
+      "nodeName": "¿Payload válido?",
+      "position": [
+        1100,
+        40
+      ]
+    },
+    {
+      "type": "setNodePosition",
+      "nodeName": "Enviar WhatsApp (aviso)",
+      "position": [
+        1320,
+        -40
+      ]
+    },
+    {
+      "type": "setNodePosition",
+      "nodeName": "Responder 200",
+      "position": [
+        1560,
+        -40
+      ]
+    },
+    {
+      "type": "setNodePosition",
+      "nodeName": "Responder error",
+      "position": [
+        1320,
+        220
+      ]
+    },
+    {
+      "type": "addConnection",
+      "source": "Webhook cita creada",
+      "target": "Evento: creada"
+    },
+    {
+      "type": "addConnection",
+      "source": "Webhook cita cancelada",
+      "target": "Evento: cancelada"
+    },
+    {
+      "type": "addConnection",
+      "source": "Evento: creada",
+      "target": "¿citaId válido?"
+    },
+    {
+      "type": "addConnection",
+      "source": "Evento: cancelada",
+      "target": "¿citaId válido?"
+    },
+    {
+      "type": "addConnection",
+      "source": "¿citaId válido?",
+      "sourceIndex": 0,
+      "target": "Leer cita"
+    },
+    {
+      "type": "addConnection",
+      "source": "¿citaId válido?",
+      "sourceIndex": 1,
+      "target": "Responder error"
+    },
+    {
+      "type": "addConnection",
+      "source": "Leer cita",
+      "target": "Validar cita y armar mensaje"
+    },
+    {
+      "type": "addConnection",
+      "source": "Validar cita y armar mensaje",
+      "target": "¿Payload válido?"
+    },
+    {
+      "type": "addNodeGroup",
+      "name": "Leer y validar cita",
+      "description": "Comprueba el citaId, lee la cita en Firestore, exige el estado del evento y arma el mensaje de WhatsApp.",
+      "nodeNames": [
+        "¿citaId válido?",
+        "Leer cita",
+        "Validar cita y armar mensaje"
+      ]
+    },
+    {
+      "type": "updateNodeGroup",
+      "groupName": "Enviar aviso y responder",
+      "description": "Si la cita es válida envía el WhatsApp y responde 200 con whatsappEnviado; si no, responde 400 (o 502 si Firestore falla) con el motivo."
+    }
+  ],
+  [
+    {
+      "type": "addNodeGroup",
+      "name": "Validar cita, avisar y responder",
+      "description": "Lee la cita por citaId, exige el estado del evento, envía el WhatsApp y responde 200, 400 o 502.",
+      "nodeNames": [
+        "¿citaId válido?",
+        "Leer cita",
+        "Validar cita y armar mensaje",
+        "¿Payload válido?",
+        "Enviar WhatsApp (aviso)",
+        "Responder 200",
+        "Responder error"
+      ]
+    }
+  ]
+]

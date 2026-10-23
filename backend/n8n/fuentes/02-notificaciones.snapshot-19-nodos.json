@@ -1,0 +1,796 @@
+{
+  "workflow": {
+    "id": "YXeVzAGU3GDqjsnz",
+    "name": "BarberFlow – Notificaciones WhatsApp",
+    "active": false,
+    "isArchived": false,
+    "versionId": "c3fd43b1-e3c0-4f4c-a816-1589d702773f",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "nodeCount": 19,
+    "createdAt": "2026-10-22T04:31:20.744Z",
+    "updatedAt": "2026-10-23T00:58:17.538Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timezone": "America/Bogota"
+    },
+    "tags": [],
+    "parentFolderId": null,
+    "scopes": [
+      "execution:delete",
+      "execution:list",
+      "execution:read",
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true,
+    "connections": {
+      "Webhook cita creada": {
+        "main": [
+          [
+            {
+              "node": "Validar y armar confirmación",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook cita cancelada": {
+        "main": [
+          [
+            {
+              "node": "Validar y armar cancelación",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validar y armar confirmación": {
+        "main": [
+          [
+            {
+              "node": "¿Payload válido?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validar y armar cancelación": {
+        "main": [
+          [
+            {
+              "node": "¿Payload válido?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "¿Payload válido?": {
+        "main": [
+          [
+            {
+              "node": "Enviar WhatsApp (aviso)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Responder 400",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enviar WhatsApp (aviso)": {
+        "main": [
+          [
+            {
+              "node": "Responder 200",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Responder 200",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Cada 15 minutos": {
+        "main": [
+          [
+            {
+              "node": "Leer configuración",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Leer configuración": {
+        "main": [
+          [
+            {
+              "node": "Buscar citas confirmadas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Buscar citas confirmadas": {
+        "main": [
+          [
+            {
+              "node": "Filtrar citas para recordar",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filtrar citas para recordar": {
+        "main": [
+          [
+            {
+              "node": "Recorrer citas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Recorrer citas": {
+        "main": [
+          [
+            {
+              "node": "Resumen de recordatorios",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Enviar WhatsApp (recordatorio)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Enviar WhatsApp (recordatorio)": {
+        "main": [
+          [
+            {
+              "node": "¿WhatsApp enviado?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Recordatorio fallido",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "¿WhatsApp enviado?": {
+        "main": [
+          [
+            {
+              "node": "Marcar recordatorioEnviado",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Recordatorio fallido",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Marcar recordatorioEnviado": {
+        "main": [
+          [
+            {
+              "node": "Recordatorio enviado",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Recordatorio fallido",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Recordatorio enviado": {
+        "main": [
+          [
+            {
+              "node": "Recorrer citas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Recordatorio fallido": {
+        "main": [
+          [
+            {
+              "node": "Recorrer citas",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "barberflow/cita-creada",
+          "authentication": "headerAuth",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "db9ca515-5107-4470-85d0-1d5681d118d7",
+        "name": "Webhook cita creada",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "1608697a-3113-47ad-8fa2-6aadf15dda62",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "cDF1WOxB1fsqUOVD",
+            "name": "BarberFlow Webhook Secret"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "barberflow/cita-cancelada",
+          "authentication": "headerAuth",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "546a46d5-c87a-4f4e-8b95-44be86002a52",
+        "name": "Webhook cita cancelada",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.2,
+        "position": [
+          0,
+          272
+        ],
+        "webhookId": "c30697e9-756c-48df-aa8a-e54259e449c1",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "cDF1WOxB1fsqUOVD",
+            "name": "BarberFlow Webhook Secret"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const b = $json.body ?? $json;\nconst faltan = ['clienteNombre', 'clienteTelefono', 'fecha', 'hora'].filter((k) => !String(b[k] ?? '').trim());\nconst numero = String(b.clienteTelefono ?? '').replace(/[\\s+\\-()]/g, '');\nlet error = '';\nif (faltan.length) error = 'Faltan campos: ' + faltan.join(', ');\nelse if (!/^57\\d{10}$/.test(numero)) error = 'clienteTelefono inválido: debe empezar por 57 y tener 12 dígitos';\n\nconst texto = [\n  'Hola ' + b.clienteNombre + ', tu cita en BarberFlow quedó confirmada ✅',\n  '📅 ' + b.fecha,\n  '🕒 ' + b.hora,\n  '💈 Barbero: ' + (b.barberoNombre ?? ''),\n  '✂️ Servicio: ' + (b.servicioNombre ?? ''),\n].join('\\n');\n\nreturn { json: { valido: !error, error, numero, texto } };"
+        },
+        "id": "48d34c4b-db08-4414-b9a9-9fa24e7a1034",
+        "name": "Validar y armar confirmación",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForEachItem",
+          "jsCode": "const b = $json.body ?? $json;\nconst faltan = ['clienteNombre', 'clienteTelefono', 'fecha', 'hora'].filter((k) => !String(b[k] ?? '').trim());\nconst numero = String(b.clienteTelefono ?? '').replace(/[\\s+\\-()]/g, '');\nlet error = '';\nif (faltan.length) error = 'Faltan campos: ' + faltan.join(', ');\nelse if (!/^57\\d{10}$/.test(numero)) error = 'clienteTelefono inválido: debe empezar por 57 y tener 12 dígitos';\n\nlet texto = 'Hola ' + b.clienteNombre + ', tu cita del ' + b.fecha + ' a las ' + b.hora + ' con ' + (b.barberoNombre ?? '') + ' fue cancelada ❌';\nif (String(b.canceladaPor ?? '').trim().toLowerCase() === 'admin') {\n  texto += '\\nLa barbería canceló la cita; puedes agendar otra desde la app.';\n}\n\nreturn { json: { valido: !error, error, numero, texto } };"
+        },
+        "id": "b00a9ee2-52ce-4dc1-983c-87fd0053c37e",
+        "name": "Validar y armar cancelación",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          272
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "valido",
+                "leftValue": "={{ $json.valido }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "c5bea23b-9f56-4c4a-a5fd-7569a23f5df3",
+        "name": "¿Payload válido?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          480,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "1wt4fUOjt1aHsaC7",
+            "cachedResultName": "BarberFlow – Enviar WhatsApp"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "numero": "={{ $json.numero }}",
+              "texto": "={{ $json.texto }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "numero",
+                "displayName": "numero",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "texto",
+                "displayName": "texto",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "mode": "each",
+          "options": {
+            "waitForSubWorkflow": true
+          }
+        },
+        "id": "24e4b605-7140-42c3-8164-9a90292387cc",
+        "name": "Enviar WhatsApp (aviso)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.4,
+        "position": [
+          720,
+          48
+        ],
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "enableResponseOutput": true,
+          "respondWith": "json",
+          "responseBody": "={{ $json.ok === true ? { ok: true, whatsappEnviado: true } : { ok: true, whatsappEnviado: false, error: (() => { const e = $json.error; if (!e) return \"Error desconocido al enviar el WhatsApp\"; if (typeof e === \"string\") return [e, $json.description].filter(Boolean).join(\" | \"); return [e.message, e.description].filter(Boolean).join(\" | \") || JSON.stringify(e); })() } }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "59e57ecf-c022-4c5f-a4e4-9859de7d9544",
+        "name": "Responder 200",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          992,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "enableResponseOutput": true,
+          "respondWith": "json",
+          "responseBody": "={{ { ok: false, error: $json.error } }}",
+          "options": {
+            "responseCode": 400
+          }
+        },
+        "id": "4fb82aa3-5e45-47b7-8386-621bf6902b34",
+        "name": "Responder 400",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          720,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "minutesInterval": 15
+              }
+            ]
+          }
+        },
+        "id": "0c5f2ac2-c49c-4039-aec1-436f8c657771",
+        "name": "Cada 15 minutos",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          624
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://firestore.googleapis.com/v1/projects/barber-flow-42bcc/databases/(default)/documents/configuracion/negocio",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleApi",
+          "options": {}
+        },
+        "id": "b8808bd9-481f-4271-b4d8-640cf9e76304",
+        "name": "Leer configuración",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.5,
+        "position": [
+          224,
+          864
+        ],
+        "credentials": {
+          "googleApi": {
+            "id": "FxYnlaVTc5j020oa",
+            "name": "Firebase BarberFlow"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://firestore.googleapis.com/v1/projects/barber-flow-42bcc/databases/(default)/documents:runQuery",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"structuredQuery\":{\"from\":[{\"collectionId\":\"citas\"}],\"where\":{\"fieldFilter\":{\"field\":{\"fieldPath\":\"estado\"},\"op\":\"EQUAL\",\"value\":{\"stringValue\":\"confirmada\"}}}}}",
+          "options": {}
+        },
+        "id": "3297ad8b-4379-4d9b-b16a-b36cabfb47e8",
+        "name": "Buscar citas confirmadas",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.5,
+        "position": [
+          464,
+          864
+        ],
+        "executeOnce": true,
+        "credentials": {
+          "googleApi": {
+            "id": "FxYnlaVTc5j020oa",
+            "name": "Firebase BarberFlow"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const ZONA = 'America/Bogota';\nconst val = (v) => (v == null ? undefined : v.stringValue ?? v.integerValue ?? v.doubleValue ?? v.booleanValue ?? v.timestampValue);\n\n// Configuración: configuracion/negocio.{modo, horasAntes, horaMismoDia}\nconst cfg = $('Leer configuración').first().json.fields || {};\nconst modo = val(cfg.modo);\nconst horasAntes = Number(val(cfg.horasAntes));\nconst horaMismoDia = String(val(cfg.horaMismoDia) ?? '');\nif (modo !== 'horas_antes' && modo !== 'mismo_dia') {\n  throw new Error('configuracion/negocio.modo debe ser \"horas_antes\" o \"mismo_dia\" (valor actual: ' + modo + ')');\n}\nif (modo === 'horas_antes' && !(horasAntes > 0)) throw new Error('configuracion/negocio.horasAntes debe ser un número mayor que 0');\nif (modo === 'mismo_dia' && !/^\\d{2}:\\d{2}$/.test(horaMismoDia)) throw new Error('configuracion/negocio.horaMismoDia debe tener formato HH:mm');\n\n// \"Ahora\" es la hora del disparo del Schedule Trigger (en producción coincide con el momento actual).\nconst disparo = $('Cada 15 minutos').first().json.timestamp;\nconst ahora = (disparo ? DateTime.fromISO(disparo) : DateTime.now()).setZone(ZONA);\nconst hoy = ahora.startOf('day');\nconst manana = hoy.plus({ days: 1 });\n\nconst salida = [];\nfor (const item of $input.all()) {\n  const doc = item.json.document;\n  if (!doc) continue; // runQuery sin resultados devuelve solo { readTime }\n  const c = doc.fields || {};\n  if (val(c.estado) !== 'confirmada') continue;\n  if (val(c.recordatorioEnviado) === true) continue; // si el campo no existe, cuenta como no enviado\n\n  const inicioIso = val(c.inicio);\n  if (!inicioIso) continue;\n  const inicio = DateTime.fromISO(inicioIso).setZone(ZONA);\n  if (inicio < hoy || inicio <= ahora) continue; // fecha >= hoy y aún no pasó\n\n  const creada = val(c.createdAt);\n  if (creada && ahora.diff(DateTime.fromISO(creada), 'minutes').minutes < 30) continue; // ya recibió la confirmación\n\n  if (modo === 'horas_antes') {\n    if (inicio > ahora.plus({ hours: horasAntes })) continue;\n  } else {\n    const [h, m] = horaMismoDia.split(':').map(Number);\n    if (ahora < hoy.set({ hour: h, minute: m })) continue;\n    if (!inicio.hasSame(ahora, 'day')) continue;\n  }\n\n  const cuando = inicio.hasSame(ahora, 'day') ? 'hoy' : inicio.hasSame(manana, 'day') ? 'mañana' : 'el ' + inicio.toFormat('dd/MM/yyyy');\n  const hora = val(c.horaInicio) || inicio.toFormat('HH:mm');\n  salida.push({\n    json: {\n      citaId: doc.name.split('/').pop(),\n      docName: doc.name,\n      numero: String(val(c.clienteTelefono) ?? '').replace(/\\D/g, ''),\n      texto: 'Hola ' + val(c.clienteNombre) + ', te recordamos tu cita ' + cuando + ' a las ' + hora + ' con ' + val(c.barberoNombre) + ' 💈',\n      inicio: inicio.toISO(),\n    },\n  });\n}\nreturn salida;"
+        },
+        "id": "d2fce84f-2142-4344-bc65-535c90932ee3",
+        "name": "Filtrar citas para recordar",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          704,
+          864
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "f900ba27-f1bb-467f-b7b9-42103be28a92",
+        "name": "Recorrer citas",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          960,
+          832
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "1wt4fUOjt1aHsaC7",
+            "cachedResultName": "BarberFlow – Enviar WhatsApp"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "numero": "={{ $json.numero }}",
+              "texto": "={{ $json.texto }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "numero",
+                "displayName": "numero",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "texto",
+                "displayName": "texto",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "mode": "each",
+          "options": {
+            "waitForSubWorkflow": true
+          }
+        },
+        "id": "e22816a2-0ca6-4680-860a-833953778d69",
+        "name": "Enviar WhatsApp (recordatorio)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.4,
+        "position": [
+          1200,
+          928
+        ],
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "ok",
+                "leftValue": "={{ $json.ok }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "looseTypeValidation": true,
+          "options": {}
+        },
+        "id": "5d9c935c-eeec-4631-89a1-c04d83286fd3",
+        "name": "¿WhatsApp enviado?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1440,
+          880
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://firestore.googleapis.com/v1/{{ $('Recorrer citas').first().json.docName }}?updateMask.fieldPaths=recordatorioEnviado&currentDocument.exists=true",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "googleApi",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"fields\":{\"recordatorioEnviado\":{\"booleanValue\":true}}}",
+          "options": {}
+        },
+        "id": "fd222dc6-556f-449f-8df6-fd56aa4469a6",
+        "name": "Marcar recordatorioEnviado",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.5,
+        "position": [
+          1680,
+          800
+        ],
+        "onError": "continueErrorOutput",
+        "credentials": {
+          "googleApi": {
+            "id": "FxYnlaVTc5j020oa",
+            "name": "Firebase BarberFlow"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "cita",
+                "name": "citaId",
+                "value": "={{ $('Recorrer citas').first().json.citaId }}",
+                "type": "string"
+              },
+              {
+                "id": "env",
+                "name": "enviado",
+                "value": true,
+                "type": "boolean"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "2d5c898d-053e-4903-9b6d-dddfe8e83b65",
+        "name": "Recordatorio enviado",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1920,
+          768
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "cita",
+                "name": "citaId",
+                "value": "={{ $('Recorrer citas').first().json.citaId }}",
+                "type": "string"
+              },
+              {
+                "id": "env",
+                "name": "enviado",
+                "value": false,
+                "type": "boolean"
+              },
+              {
+                "id": "err",
+                "name": "error",
+                "value": "={{ (() => { const e = $json.error; if (!e) return \"Error desconocido al enviar el WhatsApp\"; if (typeof e === \"string\") return [e, $json.description].filter(Boolean).join(\" | \"); return [e.message, e.description].filter(Boolean).join(\" | \") || JSON.stringify(e); })() }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "d5516f2f-bba4-4c47-a673-270a56af730a",
+        "name": "Recordatorio fallido",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1920,
+          1008
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const filas = $input.all().map((i) => i.json);\nconst fallidos = filas.filter((f) => f.enviado === false).map((f) => ({ citaId: f.citaId, error: f.error }));\nreturn [{ json: { procesadas: filas.length, enviados: filas.length - fallidos.length, huboFallos: fallidos.length > 0, fallidos } }];"
+        },
+        "id": "243f4a0b-ac0f-4725-8518-d25110015d23",
+        "name": "Resumen de recordatorios",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          688
+        ]
+      }
+    ],
+    "nodeGroups": [
+      {
+        "id": "3e8ccfc3-36b7-453f-9128-191a13f1b230",
+        "name": "Enviar aviso y responder",
+        "nodeNames": [
+          "¿Payload válido?",
+          "Enviar WhatsApp (aviso)",
+          "Responder 200",
+          "Responder 400"
+        ],
+        "description": "Si el payload es válido envía el WhatsApp y responde 200 con whatsappEnviado; si no, responde 400 con el motivo."
+      },
+      {
+        "id": "f0a0df49-b4b7-4981-b97d-3fcb8ae85242",
+        "name": "Elegir citas a recordar",
+        "nodeNames": [
+          "Leer configuración",
+          "Buscar citas confirmadas",
+          "Filtrar citas para recordar"
+        ],
+        "description": "Lee configuracion/negocio y las citas confirmadas; filtra por modo, fecha, inicio, createdAt y recordatorioEnviado."
+      },
+      {
+        "id": "1b756ff6-d95f-4eb5-878d-432f40f8ccfd",
+        "name": "Enviar recordatorios",
+        "nodeNames": [
+          "Recorrer citas",
+          "Enviar WhatsApp (recordatorio)",
+          "¿WhatsApp enviado?",
+          "Marcar recordatorioEnviado",
+          "Recordatorio enviado",
+          "Recordatorio fallido",
+          "Resumen de recordatorios"
+        ],
+        "description": "Una cita a la vez: envía el WhatsApp, marca recordatorioEnviado si salió bien y deja un resumen con los fallos."
+      }
+    ],
+    "activeVersion": null,
+    "meta": {
+      "aiBuilderAssisted": true,
+      "builderVariant": "mcp"
+    }
+  },
+  "triggerInfo": "This workflow has the following trigger(s):\n\n\nWebhook trigger(s):\n\n\n\t\t\t\t<trigger 1>\n\t\t\t\t\t - Node name: Webhook cita creada\n\t\t\t\t\t - Production URL: https://automatizacionesj.online/webhook/barberflow/cita-creada\n\t\t\t\t\t - Test URL: https://automatizacionesj.online/webhook-test/barberflow/cita-creada\n\t\t\t\t\t - HTTP Method: POST\n\t\t\t\t\t - Response Mode: Webhook is configured to respond using \"Respond to Webhook\" node.\n\t\t\t\t\t - Credentials: \n\t - This webhook requires a header with name \"x-barberflow-secret\" and a value that should be provided by the user.\n\t\t\t\t</trigger 1>\n\n\n\t\t\t\t<trigger 2>\n\t\t\t\t\t - Node name: Webhook cita cancelada\n\t\t\t\t\t - Production URL: https://automatizacionesj.online/webhook/barberflow/cita-cancelada\n\t\t\t\t\t - Test URL: https://automatizacionesj.online/webhook-test/barberflow/cita-cancelada\n\t\t\t\t\t - HTTP Method: POST\n\t\t\t\t\t - Response Mode: Webhook is configured to respond using \"Respond to Webhook\" node.\n\t\t\t\t\t - Credentials: \n\t - This webhook requires a header with name \"x-barberflow-secret\" and a value that should be provided by the user.\n\t\t\t\t</trigger 2>\n\nTo execute a webhook trigger, pass triggerNodeName and inputs: { triggerNodeName: \"<node name>\", inputs: { webhookData: { headers?, query?, body? } } }.\n\nSchedule trigger(s):\n\n\n\t\t\t\t<trigger 1>\n\t\t\t\t\t - Node name: Cada 15 minutos\n\t\t\t\t</trigger 1>\n\nScheduled workflows do not take inputs. To execute a specific schedule trigger, pass triggerNodeName only: { triggerNodeName: \"<node name>\" }."
+}
