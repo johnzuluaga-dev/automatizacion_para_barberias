@@ -11,6 +11,7 @@ import {
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { toAuthFlowError } from './errors';
@@ -42,6 +43,22 @@ export interface SignUpInput {
 }
 
 const origin = () => window.location.origin;
+
+/** Errores de Firebase cuando el dominio actual no está en "Dominios autorizados". */
+const CONTINUE_URL_ERRORS = new Set(['auth/unauthorized-continue-uri', 'auth/invalid-continue-uri']);
+
+/**
+ * Envía el enlace de verificación volviendo a /ingresar. Si el dominio no está
+ * autorizado en Firebase, lo envía sin URL de regreso en vez de no enviarlo.
+ */
+async function sendVerificationLink(user: User): Promise<void> {
+  try {
+    await sendEmailVerification(user, { url: `${origin()}/ingresar` });
+  } catch (err) {
+    if (!(err instanceof FirebaseError) || !CONTINUE_URL_ERRORS.has(err.code)) throw err;
+    await sendEmailVerification(user);
+  }
+}
 
 /** Ejecuta una llamada de Firebase Auth y lanza un AuthFlowError si falla. */
 async function run<T>(fn: () => Promise<T>): Promise<T> {
@@ -126,14 +143,14 @@ export async function signUp({ fullName, email, phone, password }: SignUpInput):
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    await sendEmailVerification(user, { url: `${origin()}/ingresar` });
+    await sendVerificationLink(user);
   });
 }
 
 export async function resendVerification(): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw toAuthFlowError(new Error('sin sesión'));
-  await run(() => sendEmailVerification(user, { url: `${origin()}/ingresar` }));
+  await run(() => sendVerificationLink(user));
 }
 
 /* ------------------------------ Inicio de sesión ------------------------- */
