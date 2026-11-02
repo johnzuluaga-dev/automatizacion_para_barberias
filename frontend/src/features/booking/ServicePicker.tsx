@@ -1,5 +1,6 @@
+import { m } from 'motion/react';
 import { Check } from 'lucide-react';
-import { ChoiceGroup } from '@/components/ui/ChoiceGroup';
+import { CARD_LIFT, ChoiceGroup } from '@/components/ui/ChoiceGroup';
 import { cn } from '@/lib/utils';
 import { formatPrice, type Service } from './catalog';
 import { StepLegend } from './StepLegend';
@@ -23,7 +24,7 @@ export function ServicePicker({ services, value, onChange, error }: ServicePicke
       onChange={onChange}
       error={error}
       className="grid grid-cols-1 gap-2.5 sm:grid-cols-2"
-      optionClassName="min-h-20 items-end justify-between p-4"
+      optionClassName={cn('min-h-20 items-end justify-between p-4', CARD_LIFT)}
       renderOption={(option, checked) => (
         <>
           <span className="max-w-[12ch] font-display text-lg leading-tight font-semibold">{option.name}</span>
@@ -37,7 +38,16 @@ export function ServicePicker({ services, value, onChange, error }: ServicePicke
               checked ? 'border-accent bg-accent text-accent-ink' : 'border-line-strong',
             )}
           >
-            {checked && <Check className="size-3" strokeWidth={3} />}
+            {checked && (
+              <m.span
+                className="grid place-items-center"
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+              >
+                <Check className="size-3" strokeWidth={3} />
+              </m.span>
+            )}
           </span>
         </>
       )}

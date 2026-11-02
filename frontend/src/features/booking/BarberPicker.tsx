@@ -1,4 +1,5 @@
-import { ChoiceGroup } from '@/components/ui/ChoiceGroup';
+import { m } from 'motion/react';
+import { CARD_LIFT, ChoiceGroup } from '@/components/ui/ChoiceGroup';
 import { cn } from '@/lib/utils';
 import { initials, type Barber } from './catalog';
 import { StepLegend } from './StepLegend';
@@ -22,18 +23,21 @@ export function BarberPicker({ barbers, value, onChange, error }: BarberPickerPr
       onChange={onChange}
       error={error}
       className="grid grid-cols-1 gap-2.5 sm:grid-cols-3"
-      optionClassName="items-center gap-3 p-3 sm:flex-col sm:items-start sm:p-4"
+      optionClassName={cn('items-center gap-3 p-3 sm:flex-col sm:items-start sm:p-4', CARD_LIFT)}
       renderOption={(option, checked) => (
         <>
-          <span
+          {/* El avatar hace un pequeño "pop" al elegir al barbero. */}
+          <m.span
             aria-hidden
+            animate={{ scale: checked ? [1, 1.15, 1] : 1 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
             className={cn(
               'grid size-11 shrink-0 place-items-center rounded-full font-display text-base font-bold transition-colors duration-150',
               checked ? 'bg-accent text-accent-ink' : 'bg-surface-2 text-ink',
             )}
           >
             {initials(option.label)}
-          </span>
+          </m.span>
           <span className="font-medium leading-tight">{option.label}</span>
         </>
       )}

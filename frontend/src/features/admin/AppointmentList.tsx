@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { m } from 'motion/react';
 import { CalendarDays, Check, CheckCheck, MessageCircle, RotateCw, UserX, X } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
@@ -23,6 +24,23 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: 'cancelada', label: 'Canceladas' },
   { value: 'no_asistio', label: 'No asistió' },
 ];
+
+/** Estado de la cita; al cambiar (p. ej. confirmar o completar) el distintivo aparece con un pequeño rebote. */
+function StatusBadge({ status, tone, label }: { status: AppointmentStatus; tone: BadgeTone; label: string }) {
+  return (
+    <m.span
+      key={status}
+      className="inline-flex"
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+    >
+      <Badge tone={tone} dot>
+        {label}
+      </Badge>
+    </m.span>
+  );
+}
 
 function formatDay(iso: string) {
   return format(new Date(`${iso}T00:00:00`), "d 'de' MMM", { locale: es });
@@ -73,7 +91,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
               className={cn(
                 'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors duration-150',
                 filter === f.value
-                  ? 'border-ink bg-ink text-bg'
+                  ? 'border-accent bg-accent text-accent-ink'
                   : 'border-line-strong text-muted hover:border-ink/40 hover:text-ink',
               )}
             >
@@ -148,13 +166,17 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
-              {visible.map((apt) => {
+              {visible.map((apt, i) => {
                 const actions = availableActions(apt.status);
                 const meta = STATUS_META[apt.status] ?? { label: apt.status, tone: 'neutral' as const };
                 const busy = updatingId === apt.id;
                 return (
-                  <tr
+                  // Las filas entran en cascada (máx. ~0,4 s aunque haya muchas citas).
+                  <m.tr
                     key={apt.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: Math.min(i, 12) * 0.03, ease: 'easeOut' }}
                     className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 px-4 py-4 transition-colors duration-150 hover:bg-surface-2/50 sm:px-6 md:table-row md:p-0"
                   >
                     <td className="md:px-6 md:py-4">
@@ -170,9 +192,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
                       <div className="tabular text-xs text-muted">{apt.client_phone}</div>
                     </td>
                     <td className="col-start-2 row-start-1 self-start md:hidden">
-                      <Badge tone={meta.tone} dot>
-                        {meta.label}
-                      </Badge>
+                      <StatusBadge status={apt.status} tone={meta.tone} label={meta.label} />
                     </td>
                     <td className="col-span-2 text-muted md:px-4 md:py-4">
                       <span className="text-ink md:text-muted">{apt.service}</span>
@@ -187,9 +207,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
                       </span>
                     </td>
                     <td className="hidden md:table-cell md:px-4 md:py-4">
-                      <Badge tone={meta.tone} dot>
-                        {meta.label}
-                      </Badge>
+                      <StatusBadge status={apt.status} tone={meta.tone} label={meta.label} />
                     </td>
                     <td className="col-span-2 md:px-6 md:py-4">
                       <div className="flex flex-wrap items-center gap-1.5 md:flex-nowrap md:justify-end">
@@ -227,7 +245,7 @@ export function AppointmentList({ appointments, loading, error, updatingId, onRe
                         )}
                       </div>
                     </td>
-                  </tr>
+                  </m.tr>
                 );
               })}
             </tbody>

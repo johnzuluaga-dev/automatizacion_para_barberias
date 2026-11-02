@@ -1,34 +1,38 @@
 /*
- * Design tokens de BarberFlow — paleta A "Cobalto sobre hueso".
- * 60 % neutros hueso/blanco · 30 % tinta y líneas · <10 % cobalto.
- * El coral (#FF6A4D) es solo para detalles pequeños, nunca para texto.
- * Los colores de estado de marca (#1E8E5A, #C98A1B, #D6453D) se usan en puntos,
- * bordes e íconos; para texto se usa su variante "-text", que cumple AA.
+ * Design tokens de BarberFlow — paleta "Blanco barbería".
+ * ~70 % blanco y grises azulados muy claros · ~20 % tinta y líneas · <10 % azul y rojo.
+ * El azul es el color de acción (botones, enlaces, foco). El rojo (--detail) es el
+ * segundo acento: franjas del poste, íconos pequeños y marcas; para texto se usa
+ * --red-text, que cumple AA sobre blanco.
+ * Los colores de estado se usan en puntos, bordes e íconos; para texto se usa su
+ * variante "-text".
  */
 
 :root {
   color-scheme: light;
 
-  /* Superficies */
-  --bg: #f4f2ed;
+  /* Superficies: el blanco manda */
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #ebe8e1;
-  --line: #e2ded5;
-  --line-strong: #cdc8bd;
+  --surface-2: #f3f6fb;
+  --line: #e3e8f0;
+  --line-strong: #c9d2e0;
 
   /* Texto */
-  --ink: #111111;
-  --muted: #6b675f;
+  --ink: #0f172a;
+  --muted: #5a6478;
 
-  /* Acento: cobalto */
-  --accent: #1f4bff;
-  --accent-hover: #1a3fd9;
+  /* Acento principal: azul */
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
   --accent-ink: #ffffff;
-  --accent-soft: #dce3ff;
-  --accent-soft-ink: #1636c4;
+  --accent-soft: #e4ecff;
+  --accent-soft-ink: #1e40af;
 
-  /* Detalle: coral (solo puntos, subrayados y marcas pequeñas) */
-  --detail: #ff6a4d;
+  /* Segundo acento: rojo (franjas, íconos y marcas pequeñas) */
+  --detail: #d6213a;
+  --red-text: #b91c32;
+  --red-soft: #fdeaed;
 
   /* Estados */
   --success: #1e8e5a;
@@ -37,22 +41,22 @@
   --warning: #c98a1b;
   --warning-text: #8a5d0f;
   --warning-soft: #f8edd8;
-  --danger: #d6453d;
-  --danger-text: #b3342d;
-  --danger-soft: #fbe5e3;
-  --info: #1f4bff;
-  --info-text: #1636c4;
-  --info-soft: #dce3ff;
+  --danger: #d6213a;
+  --danger-text: #b91c32;
+  --danger-soft: #fdeaed;
+  --info: #1d4ed8;
+  --info-text: #1e40af;
+  --info-soft: #e4ecff;
 
-  /* Forma: radios de 10 a 14 px, sombras casi imperceptibles */
+  /* Forma: radios de 10 a 14 px, sombras suaves */
   --round-sm: 10px;
   --round-md: 12px;
   --round-lg: 14px;
   --round-xl: 14px;
 
-  --elev-sm: 0 1px 2px rgb(17 17 17 / 0.04);
-  --elev-md: 0 1px 2px rgb(17 17 17 / 0.04), 0 4px 12px -6px rgb(17 17 17 / 0.08);
-  --elev-lg: 0 2px 4px rgb(17 17 17 / 0.05), 0 12px 32px -16px rgb(17 17 17 / 0.16);
+  --elev-sm: 0 1px 2px rgb(15 23 42 / 0.05);
+  --elev-md: 0 1px 2px rgb(15 23 42 / 0.05), 0 4px 12px -6px rgb(15 23 42 / 0.1);
+  --elev-lg: 0 2px 4px rgb(15 23 42 / 0.06), 0 12px 32px -16px rgb(15 23 42 / 0.2);
 
   /* Movimiento */
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
@@ -64,22 +68,24 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #131412;
-  --surface: #1b1c1a;
-  --surface-2: #242522;
-  --line: #2c2d2a;
-  --line-strong: #3c3d39;
+  --bg: #0c111d;
+  --surface: #131a29;
+  --surface-2: #1b2438;
+  --line: #243049;
+  --line-strong: #344361;
 
-  --ink: #f2f0ea;
-  --muted: #a29e95;
+  --ink: #f1f5fb;
+  --muted: #9aa6bd;
 
-  --accent: #7a95ff;
-  --accent-hover: #93a9ff;
-  --accent-ink: #0d1330;
-  --accent-soft: #1d2647;
-  --accent-soft-ink: #b9c7ff;
+  --accent: #6b93ff;
+  --accent-hover: #86a7ff;
+  --accent-ink: #0a1230;
+  --accent-soft: #1a2750;
+  --accent-soft-ink: #bcd0ff;
 
-  --detail: #ff7f66;
+  --detail: #ff6b7d;
+  --red-text: #ff8f9d;
+  --red-soft: #3a1820;
 
   --success: #3fb47e;
   --success-text: #5cc993;
@@ -87,14 +93,14 @@
   --warning: #e0a23a;
   --warning-text: #edb95c;
   --warning-soft: #2c2312;
-  --danger: #e8645c;
-  --danger-text: #f2857e;
-  --danger-soft: #331b19;
-  --info: #7a95ff;
-  --info-text: #b9c7ff;
-  --info-soft: #1d2647;
+  --danger: #ff6b7d;
+  --danger-text: #ff8f9d;
+  --danger-soft: #3a1820;
+  --info: #6b93ff;
+  --info-text: #bcd0ff;
+  --info-soft: #1a2750;
 
-  --elev-sm: 0 1px 2px rgb(0 0 0 / 0.3);
-  --elev-md: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 12px -6px rgb(0 0 0 / 0.4);
-  --elev-lg: 0 2px 4px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.55);
+  --elev-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --elev-md: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 12px -6px rgb(0 0 0 / 0.5);
+  --elev-lg: 0 2px 4px rgb(0 0 0 / 0.35), 0 12px 32px -16px rgb(0 0 0 / 0.6);
 }

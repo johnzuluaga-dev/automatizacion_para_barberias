@@ -31,6 +31,11 @@ const optionBase =
   'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent ' +
   'has-disabled:cursor-not-allowed has-disabled:border-line has-disabled:bg-surface-2/60 has-disabled:text-muted has-disabled:hover:border-line';
 
+/** Tarjetas que se elevan al pasar el mouse (servicios y barberos); se pasa en `optionClassName`. */
+export const CARD_LIFT =
+  'transition-[border-color,background-color,box-shadow,color,translate] duration-200 ' +
+  'hover:-translate-y-0.5 active:translate-y-0 has-disabled:hover:translate-y-0';
+
 /**
  * Grupo de opciones con radios nativos: flechas del teclado, foco y lectores
  * de pantalla funcionan sin JavaScript adicional.

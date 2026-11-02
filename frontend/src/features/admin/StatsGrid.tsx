@@ -23,14 +23,14 @@ export function StatsGrid({ stats, loading, unavailable = false }: StatsGridProp
 
   return (
     <section aria-label="Resumen" className="grid gap-3 md:grid-cols-[1.3fr_2fr]">
-      <div className="flex flex-col justify-between rounded-lg bg-ink p-5 text-bg sm:p-6">
-        <p className="text-sm text-bg/70">Ingresos Est.</p>
+      <div className="flex flex-col justify-between rounded-lg bg-accent p-5 text-accent-ink sm:p-6">
+        <p className="text-sm text-accent-ink/80">Ingresos Est.</p>
         {loading ? (
-          <Skeleton className="mt-6 h-12 w-32 bg-bg/15" />
+          <Skeleton className="mt-6 h-12 w-32 bg-accent-ink/20" />
         ) : (
           <p className="tabular mt-6 font-display text-5xl font-bold tracking-tight">{show(`$${stats.revenue}`)}</p>
         )}
-        <p className="mt-2 text-xs text-bg/60">Confirmadas + completadas</p>
+        <p className="mt-2 text-xs text-accent-ink/75">Confirmadas + completadas</p>
       </div>
       <dl className="grid grid-cols-3 divide-x divide-line rounded-lg border border-line bg-surface">
         {secondary.map(({ label, value }, i) => (

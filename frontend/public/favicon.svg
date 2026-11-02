@@ -1,1 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#1F4BFF"/><path d="M11 7v18M11 16.5c0-3 2-5 5-5s5 2 5 5-2 5-5 5-5-2-5-5Z" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <clipPath id="t"><rect x="10" y="6" width="12" height="20" rx="2"/></clipPath>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" fill="none" stroke="#c9d2e0"/>
+  <rect x="10" y="6" width="12" height="20" rx="2" fill="#ffffff"/>
+  <g clip-path="url(#t)">
+    <polygon points="8,3 24,-3 24,3 8,9" fill="#d6213a"/>
+    <polygon points="8,15 24,9 24,15 8,21" fill="#d6213a"/>
+    <polygon points="8,27 24,21 24,27 8,33" fill="#d6213a"/>
+    <polygon points="8,9 24,3 24,9 8,15" fill="#1d4ed8"/>
+    <polygon points="8,21 24,15 24,21 8,27" fill="#1d4ed8"/>
+  </g>
+  <rect x="10" y="6" width="12" height="20" rx="2" fill="none" stroke="#0f172a" stroke-opacity=".25"/>
+  <rect x="8" y="3.5" width="16" height="3.5" rx="1.5" fill="#aeb8c8"/>
+  <rect x="8" y="25" width="16" height="3.5" rx="1.5" fill="#aeb8c8"/>
+</svg>

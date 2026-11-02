@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { m } from 'motion/react';
 import { ArrowLeft } from 'lucide-react';
+import { BarberPole } from '@/components/ui/BarberPole';
 import { Logo } from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
@@ -21,16 +22,21 @@ interface AuthLayoutProps {
 export function AuthLayout({ title, description, children, footer, back = { to: '/', label: 'Volver a reservas' } }: AuthLayoutProps) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
-      <aside className="hidden flex-col justify-between bg-ink p-12 text-bg lg:flex dark:border-r dark:border-line dark:bg-surface dark:text-ink">
+      <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-surface-2 p-12 text-ink lg:flex">
         <Link to="/" aria-label="BarberFlow, inicio" className="w-fit rounded-md">
           <Logo />
         </Link>
-        <div>
-          <span aria-hidden className="bf-pole block h-3 w-16 rounded-full" />
-          <p className="mt-8 max-w-[11ch] font-display text-display font-bold">Tu silla, a tu hora.</p>
-          <p className="mt-6 max-w-sm opacity-75">Reserva, revisa y cancela tus citas desde tu cuenta.</p>
+        <div className="flex items-end justify-between gap-8">
+          <div>
+            <span aria-hidden className="bf-pole block h-3 w-16 rounded-full" />
+            <p className="mt-8 max-w-[11ch] font-display text-display font-bold">
+              Tu silla, <span className="text-accent">a tu hora.</span>
+            </p>
+            <p className="mt-6 max-w-sm text-muted">Reserva, revisa y cancela tus citas desde tu cuenta.</p>
+          </div>
+          <BarberPole height={260} className="hidden xl:block" />
         </div>
-        <p className="text-sm opacity-65">BarberFlow © {new Date().getFullYear()}</p>
+        <p className="text-sm text-muted">BarberFlow © {new Date().getFullYear()}</p>
       </aside>
 
       <main id="contenido" className="flex flex-col px-4 py-5 sm:px-8">
