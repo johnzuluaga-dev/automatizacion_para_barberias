@@ -143,6 +143,50 @@ describe('inicio de sesión', () => {
   });
 });
 
+describe('ingreso con Google', () => {
+  test('desde Ingresar abre sesión y vuelve a la página de origen', async () => {
+    api.signInWithGoogle.mockImplementationOnce(async () => {
+      api.setTestSession({ email: 'laura@gmail.com' });
+      return 'done';
+    });
+    const user = userEvent.setup();
+    renderAt('/ingresar', { from: '/mis-citas' });
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }));
+    expect(api.signInWithGoogle).toHaveBeenCalledTimes(1);
+    expect(await screen.findByRole('heading', { name: 'Mis citas' })).toBeInTheDocument();
+  });
+
+  test('desde Registro vuelve a donde iba (p. ej. el enlace /vincular)', async () => {
+    api.signInWithGoogle.mockImplementationOnce(async () => {
+      api.setTestSession({ email: 'laura@gmail.com' });
+      return 'done';
+    });
+    const user = userEvent.setup();
+    renderAt('/registro', { from: '/mis-citas' });
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }));
+    expect(await screen.findByRole('heading', { name: 'Mis citas' })).toBeInTheDocument();
+  });
+
+  test('cerrar la ventana de Google no muestra error', async () => {
+    api.signInWithGoogle.mockResolvedValueOnce('cancelled');
+    const user = userEvent.setup();
+    renderAt('/ingresar');
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }));
+    expect(await screen.findByRole('button', { name: 'Continuar con Google' })).toBeEnabled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  test('si Google no está activado lo explica en español', async () => {
+    api.signInWithGoogle.mockRejectedValueOnce(
+      new AuthFlowError('google_disabled', 'El ingreso con Google no está disponible todavía. Usa tu correo y contraseña.'),
+    );
+    const user = userEvent.setup();
+    renderAt('/ingresar');
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('El ingreso con Google no está disponible todavía.');
+  });
+});
+
 describe('recuperación de contraseña', () => {
   test('muestra el mismo mensaje genérico exista o no el correo', async () => {
     const user = userEvent.setup();

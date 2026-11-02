@@ -20,6 +20,9 @@ const MESSAGES: Record<string, string> = {
   user_disabled: 'Esta cuenta está deshabilitada. Escríbele a la barbería.',
   session_expired: 'Tu sesión venció. Ingresa de nuevo.',
   network: 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.',
+  google_disabled: 'El ingreso con Google no está disponible todavía. Usa tu correo y contraseña.',
+  google_domain: 'El ingreso con Google no está habilitado en esta dirección. Usa tu correo y contraseña.',
+  google_other_method: 'Ese correo ya tiene una cuenta con otro método. Ingresa con tu correo y contraseña.',
 };
 
 const FIREBASE_CODES: Record<string, string> = {
@@ -35,6 +38,10 @@ const FIREBASE_CODES: Record<string, string> = {
   'auth/requires-recent-login': 'session_expired',
   'auth/user-token-expired': 'session_expired',
   'auth/network-request-failed': 'network',
+  // Ingreso con Google
+  'auth/operation-not-allowed': 'google_disabled',
+  'auth/unauthorized-domain': 'google_domain',
+  'auth/account-exists-with-different-credential': 'google_other_method',
 };
 
 const FALLBACK = 'No pudimos completar la acción. Inténtalo de nuevo.';

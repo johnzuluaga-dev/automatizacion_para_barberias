@@ -35,6 +35,8 @@ export function resetAuthMock() {
   current = null;
   profile = null;
   listeners.clear();
+  signInWithGoogle.mockReset();
+  signInWithGoogle.mockResolvedValue('done');
   for (const fn of [signUp, resendVerification, reloadUser, signInWithPassword, requestPasswordReset]) {
     fn.mockReset();
     fn.mockResolvedValue(undefined);
@@ -62,6 +64,7 @@ export const signUp = vi.fn(async () => undefined);
 export const resendVerification = vi.fn(async () => undefined);
 export const reloadUser = vi.fn(async () => undefined);
 export const signInWithPassword = vi.fn(async () => undefined);
+export const signInWithGoogle = vi.fn(async (): Promise<'done' | 'cancelled' | 'redirect'> => 'done');
 export const requestPasswordReset = vi.fn(async () => undefined);
 export const signOut = vi.fn(async () => {
   setTestSession(null);

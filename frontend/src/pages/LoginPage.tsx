@@ -1,5 +1,6 @@
 import { Link, Navigate, useLocation } from 'react-router';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { GoogleSignIn } from '@/features/auth/GoogleSignIn';
 import { PageFallback } from '@/components/layout/PageFallback';
 import { useAuth } from '@/features/auth/auth-context';
 import { LoginForm } from '@/features/auth/LoginForm';
@@ -26,7 +27,10 @@ export default function LoginPage() {
         </>
       }
     >
-      <LoginForm redirectTo={redirectTo} />
+      <div className="flex flex-col gap-5">
+        <GoogleSignIn />
+        <LoginForm redirectTo={redirectTo} />
+      </div>
     </AuthLayout>
   );
 }

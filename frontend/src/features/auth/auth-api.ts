@@ -4,15 +4,19 @@
  */
 import {
   createUserWithEmailAndPassword,
+  getRedirectResult,
+  GoogleAuthProvider,
   onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
   type User,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { toAuthFlowError } from './errors';
 import { toE164 } from './validation';
@@ -94,6 +98,7 @@ export function subscribeToAuth(callback: (user: AuthUser | null) => void) {
     const next = user ? await toAuthUser(user) : null;
     if (mine === latest) callback(next);
   };
+  void completeGoogleRedirect();
   const stop = onAuthStateChanged(auth, (user) => void push(user));
   const refresh = () => void push(auth.currentUser);
   manualRefresh.add(refresh);
@@ -157,6 +162,68 @@ export async function resendVerification(): Promise<void> {
 
 export async function signInWithPassword(email: string, password: string): Promise<void> {
   await run(() => signInWithEmailAndPassword(auth, email, password));
+}
+
+/** Errores de la ventana de Google que solo significan "el usuario la cerró". */
+const GOOGLE_CANCELLED = new Set(['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/user-cancelled']);
+
+function googleProvider(): GoogleAuthProvider {
+  const provider = new GoogleAuthProvider();
+  // Deja elegir la cuenta aunque el navegador ya tenga una de Google abierta.
+  provider.setCustomParameters({ prompt: 'select_account' });
+  return provider;
+}
+
+/**
+ * La primera vez que alguien entra con Google se le crea el perfil con el nombre de su
+ * cuenta. Al usar el botón acepta los términos (lo dice el texto bajo el botón).
+ * Google no entrega el celular: lo pide el formulario de reserva.
+ */
+async function ensureGoogleProfile(user: User): Promise<void> {
+  const ref = doc(db, 'perfiles', user.uid);
+  if ((await getDoc(ref)).exists()) return;
+  await setDoc(ref, {
+    nombre: user.displayName?.trim() || user.email?.split('@')[0] || 'Cliente',
+    telefono: null,
+    ...(user.photoURL ? { avatarUrl: user.photoURL } : {}),
+    terminosAceptadosEn: serverTimestamp(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Ingresa (o crea la cuenta) con Google en una ventana emergente. Si el navegador la
+ * bloquea, sigue con redirección a página completa y el perfil se crea al volver
+ * (ver completeGoogleRedirect). Google ya entrega el correo verificado.
+ */
+export async function signInWithGoogle(): Promise<'done' | 'cancelled' | 'redirect'> {
+  try {
+    const { user } = await signInWithPopup(auth, googleProvider());
+    await run(() => ensureGoogleProfile(user));
+    return 'done';
+  } catch (err) {
+    if (err instanceof FirebaseError && GOOGLE_CANCELLED.has(err.code)) return 'cancelled';
+    if (err instanceof FirebaseError && err.code === 'auth/popup-blocked') {
+      await run(() => signInWithRedirect(auth, googleProvider()));
+      return 'redirect';
+    }
+    throw toAuthFlowError(err);
+  }
+}
+
+let redirectChecked = false;
+
+/** Al volver de la redirección de Google, crea el perfil si hace falta (una vez por carga). */
+async function completeGoogleRedirect(): Promise<void> {
+  if (redirectChecked) return;
+  redirectChecked = true;
+  try {
+    const result = await getRedirectResult(auth);
+    if (result) await ensureGoogleProfile(result.user);
+  } catch {
+    // Sin redirección pendiente o falló: la sesión (si la hay) sigue funcionando sin perfil.
+  }
 }
 
 /* ------------------------------- Recuperación ---------------------------- */
