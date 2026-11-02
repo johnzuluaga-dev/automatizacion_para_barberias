@@ -89,7 +89,7 @@ const ZONA = 'America/Bogota';
 const MAX_CITAS_PROXIMAS = 2;
 const DOCS = 'projects/barber-flow-42bcc/databases/(default)/documents';
 // Dominio de la web (sin / final). Vacío: el bot no manda el enlace para ligar la cita a la cuenta.
-const WEB_URL = '';
+const WEB_URL = 'https://barberfloow.up.railway.app';
 
 const entrada = $('Entrada: datos de la reserva').first().json;
 const disp = $('Consultar disponibilidad').first().json;
