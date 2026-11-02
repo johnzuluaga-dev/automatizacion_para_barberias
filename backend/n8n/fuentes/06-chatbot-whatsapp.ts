@@ -206,7 +206,8 @@ const transcribir = node({
     parameters: {
       resource: 'audio',
       operation: 'analyze',
-      modelId: { __rl: true, mode: 'id', value: MODELO },
+      // Flash Lite: cuota propia, así la transcripción no compite con el agente (daba "too many requests").
+      modelId: { __rl: true, mode: 'id', value: MODELO_RESPALDO },
       text: 'Transcribe este audio en español, solo el texto',
       inputType: 'binary',
       binaryPropertyName: 'data',
@@ -261,11 +262,27 @@ const pedirTexto = node({
     parameters: {
       mode: 'manual',
       includeOtherFields: false,
-      assignments: { assignments: [{ id: 't', name: 'texto', value: 'No pude entender tu audio 🙏 ¿Me escribes tu mensaje, por favor? (Los audios deben durar máximo 60 segundos).', type: 'string' }] }
+      // Falla al descargar, convertir o transcribir (p. ej. Gemini con "too many requests"): no culpar a la duración.
+      assignments: { assignments: [{ id: 't', name: 'texto', value: 'No pude procesar tu audio en este momento 🙏 ¿Me escribes tu mensaje, por favor?', type: 'string' }] }
     },
     position: [2200, 560]
   },
   output: [{ texto: 'No pude entender tu audio' }]
+});
+
+const audioLargo = node({
+  type: 'n8n-nodes-base.set',
+  version: 3.4,
+  config: {
+    name: 'Audio muy largo',
+    parameters: {
+      mode: 'manual',
+      includeOtherFields: false,
+      assignments: { assignments: [{ id: 't', name: 'texto', value: 'Tu audio es muy largo 🙏 Envíame uno de máximo 60 segundos o escríbeme tu mensaje.', type: 'string' }] }
+    },
+    position: [1100, 560]
+  },
+  output: [{ texto: 'Tu audio es muy largo' }]
 });
 
 const noSoportado = node({
@@ -576,7 +593,7 @@ export default workflow('barberflow-chatbot', 'BarberFlow – Chatbot WhatsApp')
     .onCase(0, paraAgente)
     .onCase(1, audioCorto
       .onTrue(descargarAudio.onError(pedirTexto))
-      .onFalse(pedirTexto))
+      .onFalse(audioLargo))
     .onCase(2, noSoportado))
   .add(descargarAudio)
   .to(audioArchivo.onError(pedirTexto))
@@ -594,5 +611,7 @@ export default workflow('barberflow-chatbot', 'BarberFlow – Chatbot WhatsApp')
   .add(pedirTexto)
   .to(enviarRespuesta)
   .add(noSoportado)
+  .to(enviarRespuesta)
+  .add(audioLargo)
   .to(enviarRespuesta)
   .group('Recibir y filtrar', [normalizar, soloClientes], { description: 'Lee el evento de Evolution e ignora fromMe, grupos, difusiones y otras instancias.' });
